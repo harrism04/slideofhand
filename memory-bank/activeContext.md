@@ -8,8 +8,10 @@
   - Adapted recording and navigation controls to remain functional and accessible in full-screen mode, typically as an overlay at the bottom.
   - Added `Maximize` and `Minimize` icons from `lucide-react`.
   - Updated `components/slide-preview.tsx` to accept an `isFullscreen` prop and adjust its internal styling (font sizes, padding, image sizing) accordingly for better full-screen presentation.
-- **Disabled PPTX Import**: Due to persistent build errors with `@saltcorn/docling` and its dependencies (`underscore`, `package.json` resolution issues), the PPTX import functionality has been temporarily disabled.
-  - PDF import functionality remains active as it uses `pdf-parse`, which is working correctly.
+- **Disabled ALL File Imports (PPTX & PDF)**:
+  - PPTX import was previously disabled due to build errors with `@saltcorn/docling`.
+  - PDF import has now also been disabled by removing the `pdf-parse` dependency and updating related code to resolve Vercel build errors.
+  - All file import functionality is currently unavailable.
 - **Implemented Auto-Save for Practice Sessions**: Practice sessions in `app/practice/page.tsx` are now automatically saved after recording and analysis are complete.
 - **RESOLVED**: The persistent `null` session issue in Next.js API routes (e.g., `/api/generate-presentation`) that was preventing slide creation due to RLS violations has been resolved.
 - AI-generated slide creation is now working correctly.
@@ -28,6 +30,7 @@
     - Updated `app/practice/select/page.tsx` to include an option to start "Interactive Q&A" mode, linking to `/practice/interactive/[presentationId]`.
     - Created `app/practice/interactive/[presentationId]/page.tsx` with the basic UI structure, state management, and core logic for fetching presentation data, handling chat (text and voice via transcription), playing AI audio responses, and slide navigation.
 - **Logging Cleanup**: Reduced verbose logging in `middleware.ts` and `app/api/generate-presentation/route.ts`.
+- **Route Protection**: Implemented route protection in `middleware.ts` to redirect unauthenticated users to `/auth` for all pages except `/` and `/auth/**`.
 
 ## Recent Changes
 - **`app/practice/page.tsx`**:
@@ -53,17 +56,15 @@
     - Added `getInteractiveChatResponse` client-side function to call the new `/api/interactive-chat` endpoint.
     - Explicitly typed the `analysis` field in `PracticeSession` and `PracticeSessionWithDetails` as `AnalysisResult | null` to resolve TypeScript errors in `performance-chart.tsx`.
 - **`app/presentations/page.tsx`**:
-    - Commented out the `<Dialog>` component responsible for the "Import Presentation" button and its functionality.
+    - Commented out the `<Dialog>` component responsible for the "Import Presentation" button and its functionality (remains commented out).
 - **`app/api/import-presentation/route.ts`**:
-    - Commented out `import { extract } from '@saltcorn/docling';`.
-    - Modified the `else if (fileType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation')` block to return a 503 error, disabling PPTX import.
-    - Updated the final `else` block's error message to specify "Unsupported file type. Please upload a PDF file."
+    - Removed `pdf-parse` import.
+    - Modified logic to disable both PDF and PPTX imports, returning a 503 error for these file types.
 - **`app/create/page.tsx`**:
-    - Changed the "Import from PDF/PPTX" button text to "Import from PDF".
-    - Updated the import dialog description to only mention PDF files.
+    - Changed the "Import from PDF" button text to "Import (Disabled)" and set the button to `disabled`.
 - **`components/file-upload.tsx`**:
-    - Changed the default `acceptedFileTypes` prop to `'.pdf,application/pdf'`.
-    - Updated the "No file selected" toast description to "Please select a PDF file to import."
+    - Changed the default `acceptedFileTypes` prop to `""` (empty string).
+    - Updated the "No file selected" toast description to be generic ("Please select a file.").
 - **`components/ui/ThinkingProgress.tsx`**: Created new component.
 - **`components/ui/TypewriterText.tsx`**: Created new component.
 - **`app/create/loading.tsx`**: Integrated `ThinkingProgress` for presentation creation flow.
@@ -75,6 +76,7 @@
     - Modified to use `createBrowserClient` from `@supabase/ssr` instead of `createClient` from `@supabase/supabase-js`. This was the **key fix** to enable cookie-based session management on the client-side, allowing the session to be shared with server-side components (middleware and API routes).
 - **`middleware.ts`**:
     - Enhanced logging was added to trace cookie handling and Supabase user session retrieval. This logging confirmed that Supabase auth cookies were initially missing from incoming requests.
+    - Updated to include redirection logic for unauthenticated users. Public paths are defined as `/` and `/auth/**`. Unauthenticated access to other paths redirects to `/auth`.
 - **`app/api/generate-presentation/route.ts`**:
     - Enhanced logging was added to trace incoming cookies and session state. This also initially showed missing auth cookies and a null session.
 - **`components/performance-chart.tsx`**:
@@ -92,8 +94,11 @@
 - **Test Full-Screen Mode**: Thoroughly test the new full-screen slide mode in `app/practice/page.tsx`.
     - Verify layout adjustments, control visibility and functionality, and slide rendering in both normal and full-screen states.
     - Check for any visual glitches or usability issues.
+- **Test Route Protection**: Thoroughly test the new authentication protection in `middleware.ts`.
+    - Verify that unauthenticated users are redirected to `/auth` from protected pages.
+    - Verify that authenticated users can access protected pages.
+    - Verify that `/` and `/auth/**` remain accessible to everyone.
 - **Consider Full-Screen for Interactive Q&A**: Evaluate implementing a similar full-screen slide toggle for `app/practice/interactive/[presentationId]/page.tsx`.
-- **Verify PDF Import**: Test the PDF import functionality to ensure it still works correctly.
 - **Verify `/history` Page**: Check if the `/history` page now loads correctly without errors after the changes to `performance-chart.tsx` and `practice-service.ts`.
 - **Test Auto-Save Functionality**: Thoroughly test the new auto-save feature in `app/practice/page.tsx` under various conditions (e.g., successful transcription/analysis, mock/error transcription).
 - **Test `savePracticeSession` (manual and auto)**: Verify that saving practice sessions also works correctly with the authenticated user context and RLS policies for both manual and automatic saves.
@@ -108,10 +113,11 @@
 
 ## Active Decisions & Considerations
 - Full-screen slide mode implemented as a toggle within the existing standard practice page.
-- PPTX import is disabled due to unresolved build issues with its dependencies. PDF import is maintained.
+- All file imports (PPTX and PDF) are now disabled to resolve Vercel build errors. The `pdf-parse` dependency has been removed.
 - Backend for interactive Q&A practice mode is complete, using OpenAI for text generation and Groq PlayAI TTS for speech.
-- The core issue was the client-side Supabase client not being configured for cookie-based SSR authentication.
+- The core issue regarding `null` session was the client-side Supabase client not being configured for cookie-based SSR authentication.
 - The server-side setup (`middleware.ts` and API routes using `createServerClient`) was largely correct but depended on the client sending the auth cookies.
+- Route protection is implemented in `middleware.ts` by checking the user's session and redirecting if necessary, while allowing access to defined public paths.
 
 ## Important Patterns & Preferences
 - For Next.js applications using Supabase SSR features (middleware, API routes needing auth context), it's crucial to use:
@@ -121,7 +127,7 @@
 - Conditionally styling components for different view modes (e.g., normal vs. full-screen) using state and Tailwind CSS.
 
 ## Learnings & Project Insights
-- Dependency issues in third-party libraries can be complex to resolve within a specific build environment (Next.js/Webpack/pnpm). Sometimes, temporarily disabling features reliant on problematic dependencies is a pragmatic approach.
+- Dependency issues in third-party libraries (like `pdf-parse` and its own dependencies like `debug`) can be complex to resolve within a specific build environment (Next.js/Webpack/pnpm/Vercel). Removing the problematic dependency was the chosen solution for Vercel build stability.
 - The choice of Supabase client initialization (`createClient` vs. `createBrowserClient`) is critical for how sessions are persisted (localStorage vs. cookies) and shared in a Next.js SSR context.
 - When debugging auth issues, tracing the presence and flow of authentication cookies from the browser through to server-side request handlers is essential.
 - RLS policies rely on a valid authenticated session being available to the database. If the session is `null` at the API route level, RLS will typically block operations.

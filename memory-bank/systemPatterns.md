@@ -25,6 +25,7 @@ The application follows a modern web architecture leveraging the Next.js framewo
     -   **GROQ API (PlayAI TTS - e.g., Fritz-PlayAI voice)**:
         -   Used for text-to-speech synthesis of AI responses in the interactive Q&A practice mode (via `/api/interactive-chat`, which calls `services/groq-service.ts`).
     -   **Firecrawl**: For web scraping when summarizing URLs for presentation content (via `/api/generate-presentation` in "summary" mode, potentially leveraged by OpenAI's web_search_tool).
+    -   **File Import (`/api/import-presentation`)**: Currently disabled. Previously used `pdf-parse` for PDF files and had `@saltcorn/docling` for PPTX (also disabled). Both are now non-operational to resolve build issues.
 
 **Interaction Flow for Transcription and Analysis (Standard Practice Mode):**
 1.  **Transcription (`/api/transcribe`)**:
@@ -62,7 +63,7 @@ The application follows a modern web architecture leveraging the Next.js framewo
 1.  **Next.js 14 with App Router**.
 2.  **TypeScript**.
 3.  **Supabase**: BaaS.
-    -   **RLS Strategy**: `anon` role access for hackathon.
+    -   **RLS Strategy**: `anon` role access for hackathon. Now transitioning to authenticated user access, with route protection implemented in `middleware.ts`.
     -   **`exec_sql` Function**: For schema management.
 4.  **shadcn/ui & Tailwind CSS**.
 5.  **Specialized AI Service Strategy**:
@@ -113,6 +114,9 @@ The application follows a modern web architecture leveraging the Next.js framewo
     -   `/api/interactive-chat` orchestrates OpenAI LLM for text and Groq TTS for speech.
     -   Client handles audio recording, transcription via `/api/transcribe`, and displays conversation.
 4.  **Data Persistence & Retrieval** (Supabase CRUD, RLS).
+5.  **Authentication & Authorization**:
+    -   Supabase Auth for user authentication.
+    -   Next.js Middleware (`middleware.ts`) for route protection, redirecting unauthenticated users to `/auth` for protected pages. Public paths include `/` and `/auth/**`.
 
 ## Loading and Progress Indicators
 

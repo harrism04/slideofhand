@@ -41,6 +41,20 @@ export async function middleware(request: NextRequest) {
   //   console.log('[Middleware] User session refreshed:', user.id);
   // }
 
+  const { pathname } = request.nextUrl;
+
+  // Define public paths: home page ('/') and any path starting with '/auth'
+  const isPublicPath = pathname === '/' || pathname.startsWith('/auth');
+
+  // If the path is not public and there's no authenticated user, redirect to /auth
+  if (!isPublicPath && !user) {
+    const loginUrl = new URL('/auth', request.url);
+    // Optional: You could add a query param to redirect back after login
+    // loginUrl.searchParams.set('redirectedFrom', pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // If public path or user is authenticated, proceed
   return response
 }
 
