@@ -106,6 +106,14 @@ export async function getAllPresentations(
 ): Promise<PresentationWithPreviewData[]> {
   const client = supabaseClient || globalSupabaseClient;
   try {
+    const { data: { user } } = await client.auth.getUser();
+
+    if (!user) {
+      // No user logged in, or session is for an anonymous user
+      console.log("getAllPresentations: No authenticated user found. Returning empty array.");
+      return [];
+    }
+
     // Try to initialize the database if tables don't exist
     try {
       await initializeDatabase()
@@ -133,7 +141,10 @@ export async function getAllPresentations(
     }
 
     // Get presentations, filtering by deleted_at if the column exists
-    let query = client.from("presentations").select("*")
+    let query = client
+      .from("presentations")
+      .select("*")
+      .eq("user_id", user.id); // Filter by user_id
 
     if (hasDeletedAtColumn) {
       query = query.is("deleted_at", null) // Only get non-deleted presentations
