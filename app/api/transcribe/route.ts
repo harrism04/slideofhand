@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     formData.append("file", audioBlob, "recording.webm")
     formData.append("model", "whisper-large-v3")
     formData.append("response_format", "verbose_json")
-    formData.append("prompt", "I'm like,you know what I mean, kind of, um, ah, huh, and so, so um, uh, and um, like um, so like, like it's, it's like, i mean, yeah, ok so, uh so, so uh, yeah so, you know, it's uh, uh and, and uh, like, kind")
+    formData.append("prompt", "Transcribe naturally, including disfluencies like um, uh, so.")
 
     // Send request to Groq API using multipart/form-data
     const response = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {

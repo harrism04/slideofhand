@@ -201,3 +201,53 @@ export async function deletePracticeSession(id: string): Promise<boolean> {
     return false
   }
 }
+
+// For OpenAI chat completion message params
+interface ChatCompletionMessageParam {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  name?: string;
+}
+
+
+export interface InteractiveChatResponse {
+  aiTextResponse: string;
+  aiAudioBase64: string;
+  contentType: string;
+  updatedConversationHistory: ChatCompletionMessageParam[];
+}
+
+export async function getInteractiveChatResponse(
+  slideTitle: string | undefined,
+  slideContent: string,
+  userResponse?: string,
+  conversationHistory?: ChatCompletionMessageParam[]
+): Promise<InteractiveChatResponse> {
+  try {
+    const response = await fetch("/api/interactive-chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        slideTitle,
+        slideContent,
+        userResponse,
+        conversationHistory,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Interactive chat API error:", errorData.error || response.statusText);
+      throw new Error(errorData.error || `Interactive chat failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error in getInteractiveChatResponse:", error);
+    // In a real app, you might want to return a more structured error object
+    // or a default response that indicates an error to the UI.
+    throw error; // Re-throw to be handled by the calling UI component
+  }
+}

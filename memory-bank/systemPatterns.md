@@ -16,23 +16,46 @@ The application follows a modern web architecture leveraging the Next.js framewo
         -   **Schema Management**: Relies on a custom PostgreSQL function `exec_sql(sql_string TEXT)` for application-driven schema modifications.
     -   Supabase Storage is used for storing audio recordings.
 -   **AI Integration**:
+    -   **GROQ API (groq-whisper-large-v3-turbo)**:
+        -   Used for highly accurate speech-to-text transcription of practice recordings (via `/api/transcribe`).
     -   **OpenAI (gpt-4o-mini)**:
-        - Used for presentation content generation (via `/api/generate-presentation`).
-        - Used for **Clarity analysis** in presentation practice (via `/api/analyze`). The LLM compares slide content to transcribed speech to provide a score and feedback.
-    -   **Local Analysis**:
-        - Speech analysis for **Pace** (words per minute) and **Filler Words** is performed locally within the `/api/analyze` route based on the transcription.
-    -   **Browser Web Speech API / Custom Audio Processing**: For capturing audio and performing transcription (via `/api/transcribe`).
-    -   **Firecrawl**: For web scraping when summarizing URLs for presentation content (via `/api/generate-presentation` in "summary" mode).
+        -   Used for presentation content generation (via `/api/generate-presentation`).
+        -   Used for comprehensive analysis of GROQ-generated transcriptions in presentation practice (via `/api/analyze`).
+        -   Used for generating textual responses/questions in the interactive Q&A practice mode (via `/api/interactive-chat`).
+    -   **GROQ API (PlayAI TTS - e.g., Fritz-PlayAI voice)**:
+        -   Used for text-to-speech synthesis of AI responses in the interactive Q&A practice mode (via `/api/interactive-chat`, which calls `services/groq-service.ts`).
+    -   **Firecrawl**: For web scraping when summarizing URLs for presentation content (via `/api/generate-presentation` in "summary" mode, potentially leveraged by OpenAI's web_search_tool).
 
-**Interaction Flow for Analysis (`/api/analyze`):**
-1.  User completes a practice recording in the frontend (`app/practice/page.tsx`).
-2.  The frontend calls `analyzeTranscription` in `services/groq-service.ts`, passing the transcription, duration, and slide contents.
-3.  `analyzeTranscription` POSTs this data to the `/api/analyze` Next.js API route.
-4.  The `/api/analyze/route.ts` (`performBasicAnalysis` function):
-    -   Calculates Pace and Filler Words locally.
-    -   Calls `getClarityFromOpenAI` which constructs a prompt with slide content and transcription, then calls the OpenAI API (gpt-4o-mini) to get a clarity score and feedback.
-    -   Combines these results (Pace, LLM-based Clarity, Filler Words) into a final analysis object.
-    -   Returns the analysis to the client.
+**Interaction Flow for Transcription and Analysis (Standard Practice Mode):**
+1.  **Transcription (`/api/transcribe`)**:
+    -   User completes a practice recording in the frontend (`app/practice/page.tsx`).
+    -   Audio data is sent to the `/api/transcribe` Next.js API route.
+    -   The `/api/transcribe/route.ts` calls the GROQ API (groq-whisper-large-v3-turbo) to get the transcription.
+    -   The transcription is returned to the client.
+2.  **Analysis (`/api/analyze`)**:
+    -   The client, having received the transcription from `/api/transcribe`, calls a service function (e.g., in `services/practice-service.ts` or a renamed `services/analysis-service.ts`), passing the GROQ transcription, original audio duration, and slide contents.
+    -   This service function POSTs the data to the `/api/analyze` Next.js API route.
+    -   The `/api/analyze/route.ts` then sends the transcription and slide content to OpenAI (gpt-4o-mini) for a comprehensive analysis (clarity, pace insights, filler words, feedback generation).
+    -   The analysis results from OpenAI are returned to the client.
+
+**Interaction Flow for Interactive Q&A Practice Mode:**
+1.  **AI Initiates Question (New Slide)**:
+    -   Frontend (`app/practice/interactive/page.tsx` - *to be created*) sends current slide content to `/api/interactive-chat`.
+    -   Backend (`/api/interactive-chat/route.ts`):
+        -   Calls `services/openai-service.ts#generateChatResponseOpenAI` to generate an initial question based on slide content.
+        -   Calls `services/groq-service.ts#synthesizeSpeechGroq` to convert the AI's question text to speech (Fritz-PlayAI voice).
+    -   Backend returns AI's question (text and base64 audio) to the client.
+    -   Client plays audio and displays text.
+2.  **User Responds (Voice or Text)**:
+    -   **Voice**: User speaks. Audio recorded by client, sent to `/api/transcribe` (GROQ Whisper). Transcription returned to client.
+    -   **Text**: User types response.
+3.  **AI Follow-up**:
+    -   Client sends user's transcribed/typed response + slide content + conversation history to `/api/interactive-chat`.
+    -   Backend (`/api/interactive-chat/route.ts`):
+        -   Calls `services/openai-service.ts#generateChatResponseOpenAI` for a follow-up response.
+        -   Calls `services/groq-service.ts#synthesizeSpeechGroq` for TTS.
+    -   Backend returns AI's follow-up (text and base64 audio) to the client.
+    -   Client plays audio and displays text. Loop to User Responds.
 
 ## Key Technical Decisions
 
@@ -42,10 +65,13 @@ The application follows a modern web architecture leveraging the Next.js framewo
     -   **RLS Strategy**: `anon` role access for hackathon.
     -   **`exec_sql` Function**: For schema management.
 4.  **shadcn/ui & Tailwind CSS**.
-5.  **Hybrid AI Analysis Strategy**:
-    -   **LLM (OpenAI gpt-4o-mini)** for nuanced tasks like Clarity assessment.
-    -   **Local, rule-based logic** for simpler metrics like Pace and Filler Words, ensuring speed and cost-effectiveness for these aspects.
+5.  **Specialized AI Service Strategy**:
+    -   Utilizing best-in-class AI services for specific tasks:
+        -   **GROQ (groq-whisper-large-v3-turbo)** for high-fidelity speech-to-text transcription.
+        -   **OpenAI (gpt-4o-mini)** for versatile content generation, in-depth analysis of transcribed text, and conversational AI for interactive Q&A.
+        -   **GROQ (PlayAI TTS)** for text-to-speech synthesis in interactive Q&A.
 6.  **Serverless Functions (Next.js API Routes)**.
+7.  **Integrated Full-Screen Mode**: Full-screen slide viewing is implemented as a toggle within existing practice pages (`app/practice/page.tsx`) rather than a separate route, for a more seamless UX.
 
 ## Design Patterns in Use
 
@@ -54,26 +80,39 @@ The application follows a modern web architecture leveraging the Next.js framewo
 -   **Repository Pattern (Conceptual)**: `services/` directory.
 -   **Provider Pattern (React Context)**.
 -   **Utility-First CSS (Tailwind CSS)**.
+-   **Conditional Rendering/Styling**: Used extensively for features like the full-screen slide mode, adapting UI elements based on application state.
 
 ## Component Relationships
 
 -   **`/app` (Pages/Routes)**: Orchestrate UI and data flow.
-    -   `app/practice/page.tsx`: Handles practice mode UI, recording, and calls `analyzeTranscription`.
+    -   `app/practice/page.tsx`: Handles standard practice mode UI, recording, analysis, and **full-screen slide toggling**.
 -   **`/components` (UI Elements)**:
-    -   `components/feedback-panel.tsx`: Displays analysis results (now excluding Engagement).
+    -   `components/feedback-panel.tsx`: Displays analysis results.
+    -   `components/slide-preview.tsx`: Displays individual slides. **Modified to accept an `isFullscreen` prop to adjust its rendering for full-screen display.**
 -   **`/services` (Business Logic/API Interaction)**:
-    -   `services/groq-service.ts`: Contains `analyzeTranscription` which calls the `/api/analyze` endpoint.
--   **`/api/analyze/route.ts`**: Backend logic for calculating all performance metrics, including the LLM call for Clarity.
+    -   `services/practice-service.ts`: Contains functions to interact with `/api/transcribe`, `/api/analyze`, and the new `/api/interactive-chat` (via `getInteractiveChatResponse`).
+    -   `services/groq-service.ts`: Contains `transcribeAudio` (client-side caller for `/api/transcribe`) and `synthesizeSpeechGroq` (server-side, called by `/api/interactive-chat`).
+    -   `services/openai-service.ts`: Contains `generateChatResponseOpenAI` (server-side, called by `/api/interactive-chat`).
+-   **`/api/transcribe/route.ts`**: Backend logic for interacting with GROQ API for transcription.
+-   **`/api/analyze/route.ts`**: Backend logic for sending transcriptions to OpenAI for comprehensive analysis and feedback generation.
+-   **`/api/interactive-chat/route.ts`**: New backend logic to orchestrate OpenAI text generation and Groq TTS for interactive Q&A.
 
 ## Critical Implementation Paths
 
 1.  **AI Content Generation Workflow**.
 2.  **Practice Mode & Feedback Loop**:
-    -   Client (`app/practice/page.tsx`) captures audio, sends for transcription.
-    -   Client sends transcription, duration, and slide content to `/api/analyze` (via `services/groq-service.ts`).
-    -   Backend (`/api/analyze/route.ts`) performs local analysis for Pace/Filler Words and calls OpenAI for Clarity.
+    -   Client (`app/practice/page.tsx`) captures audio.
+    -   Audio sent to `/api/transcribe` which uses GROQ for transcription.
+    -   Client receives GROQ transcription.
+    -   Client sends GROQ transcription, duration, and slide content to `/api/analyze`.
+    -   Backend (`/api/analyze/route.ts`) sends this data to OpenAI (gpt-4o-mini) for comprehensive analysis and feedback.
     -   Results displayed in `components/feedback-panel.tsx`.
-3.  **Data Persistence & Retrieval** (Supabase CRUD, RLS).
+    -   **Full-screen slide display toggle within this flow.**
+3.  **Interactive Q&A Practice Mode Workflow**:
+    -   Client (`app/practice/interactive/page.tsx`) initiates interaction.
+    -   `/api/interactive-chat` orchestrates OpenAI LLM for text and Groq TTS for speech.
+    -   Client handles audio recording, transcription via `/api/transcribe`, and displays conversation.
+4.  **Data Persistence & Retrieval** (Supabase CRUD, RLS).
 
 ## Loading and Progress Indicators
 

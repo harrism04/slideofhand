@@ -2,11 +2,12 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react" // Added useRef
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, ChevronRight, Edit, Plus, Trash } from "lucide-react"
-import { isSupabaseConfigured } from "@/utils/supabase-client"
+import { ArrowLeft, ChevronRight, Edit, Plus, Trash, Mic, MessageSquareText, FileDown, Loader2 } from "lucide-react" // Added FileDown, Loader2
+import { isSupabaseConfigured, supabase as supabaseClient } from "@/utils/supabase-client" // Added supabaseClient
+import html2canvas from "html2canvas" // Added html2canvas
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,6 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { SlidePreview } from "@/components/slide-preview" // Corrected import
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,11 +39,15 @@ import {
   getAllPresentations,
   createPresentation,
   softDeletePresentation,
+  getPresentation as getFullPresentation, // Renamed to avoid conflict
   type PresentationWithPreviewData,
+  type PresentationWithSlides, // Added PresentationWithSlides
+  type Slide, // Added Slide
 } from "@/services/presentation-service"
 
 export default function PresentationsPage() {
   const router = useRouter()
+  const offScreenContainerRef = useRef<HTMLDivElement | null>(null) // For rendering slides off-screen
   const [presentations, setPresentations] = useState<PresentationWithPreviewData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [newPresentationTitle, setNewPresentationTitle] = useState("")
@@ -51,7 +57,12 @@ export default function PresentationsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [databaseError, setDatabaseError] = useState<string | null>(null)
-  const [showImportDialog, setShowImportDialog] = useState(false); // State for import dialog
+  // const [showImportDialog, setShowImportDialog] = useState(false); // State for import dialog - currently commented out
+
+  const [isExportingPdf, setIsExportingPdf] = useState(false)
+  const [currentExportingId, setCurrentExportingId] = useState<string | null>(null)
+  const [slideForOffScreenRender, setSlideForOffScreenRender] = useState<Slide | null>(null)
+
 
   // Check if Supabase is configured
   const supabaseConfigured = isSupabaseConfigured()
@@ -218,6 +229,182 @@ export default function PresentationsPage() {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+  }
+
+  const handleExportPdf = async (presentationId: string, presentationTitle: string) => {
+    if (!supabaseConfigured || !supabaseClient) {
+      toast({
+        title: "Error",
+        description: "Supabase client not available. Cannot export PDF.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setCurrentExportingId(presentationId)
+    setIsExportingPdf(true)
+    toast({
+      title: "Exporting PDF...",
+      description: `Preparing "${presentationTitle}" for export. This may take a moment.`,
+    })
+
+    try {
+      const fullPresentationData = await getFullPresentation(presentationId, supabaseClient)
+
+      if (!fullPresentationData || !fullPresentationData.slides || fullPresentationData.slides.length === 0) {
+        toast({
+          title: "Error",
+          description: "No slides found for this presentation.",
+          variant: "destructive",
+        })
+        throw new Error("No slides found")
+      }
+
+      const offScreenContainer = offScreenContainerRef.current
+      if (!offScreenContainer) {
+        // Create the off-screen container if it doesn't exist (should be in JSX)
+        // This is a fallback, ideally it's always there from initial render.
+        console.error("Off-screen container not found.")
+        toast({ title: "Error", description: "PDF export setup failed.", variant: "destructive"})
+        throw new Error("Off-screen container ref is null")
+      }
+      
+      // Ensure it's styled to be off-screen but renderable
+      offScreenContainer.style.position = "fixed"
+      offScreenContainer.style.left = "-9999px" // Position off-screen
+      offScreenContainer.style.top = "-9999px"
+      // Define a fixed size for rendering, e.g., 1280x720 for a 16:9 aspect ratio
+      // This size should match what SlidePreview expects or is designed for.
+      const renderWidth = 1280 
+      const renderHeight = 720
+      // Ensure offScreenContainer is styled correctly for rendering
+      // These styles are also set on the div itself, but good to ensure here too.
+      offScreenContainer.style.width = `${renderWidth}px`
+      offScreenContainer.style.height = `${renderHeight}px`
+      offScreenContainer.style.position = "fixed"
+      offScreenContainer.style.left = "-9999px"
+      offScreenContainer.style.top = "-9999px"
+      offScreenContainer.style.zIndex = "-1" // Ensure it's not visible but renderable
+      offScreenContainer.style.backgroundColor = "white" // Important for html2canvas
+
+      const imagesBase64: string[] = []
+
+      // Helper function to capture a single slide
+      const captureSlideAsImage = (slide: Slide): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          setSlideForOffScreenRender(slide)
+          
+          // Wait for React to render the slide and for images to load
+          // setTimeout is a common way to wait for the next render cycle.
+          // A more robust solution might involve MutationObserver or image load events.
+          setTimeout(async () => {
+            if (offScreenContainerRef.current) {
+              try {
+                // Ensure all images within the slide preview are loaded
+                const images = offScreenContainerRef.current.getElementsByTagName('img');
+                const imageLoadPromises: Promise<void>[] = [];
+                for (let i = 0; i < images.length; i++) {
+                  if (!images[i].complete) {
+                    imageLoadPromises.push(new Promise(imgResolve => {
+                      images[i].onload = () => imgResolve();
+                      images[i].onerror = () => imgResolve(); // Resolve on error too to not block
+                    }));
+                  }
+                }
+                await Promise.all(imageLoadPromises);
+
+                // Additional small delay for any final rendering tweaks
+                await new Promise(r => setTimeout(r, 100));
+
+
+                const canvas = await html2canvas(offScreenContainerRef.current, {
+                  useCORS: true,
+                  allowTaint: true, // Important for external images if useCORS is not enough
+                  width: renderWidth,
+                  height: renderHeight,
+                  scale: 1, // Use 1 for actual size. Increase for higher res, but impacts performance.
+                  backgroundColor: null, // Use the div's background color
+                  logging: false, // Disable html2canvas logging for cleaner console
+                })
+                resolve(canvas.toDataURL("image/png"))
+              } catch (error) {
+                console.error("Error capturing slide with html2canvas:", error)
+                reject(error)
+              }
+            } else {
+              reject(new Error("Off-screen container not available for capture."))
+            }
+          }, 200) // Increased timeout slightly for rendering and image loads
+        })
+      }
+
+      for (const slide of fullPresentationData.slides) {
+        try {
+          const imageDataUrl = await captureSlideAsImage(slide)
+          imagesBase64.push(imageDataUrl)
+        } catch (error) {
+          console.error(`Failed to capture slide "${slide.title || 'Untitled'}":`, error)
+          // Optionally, push a placeholder or skip this slide
+          toast({
+            title: "Capture Error",
+            description: `Could not capture slide: ${slide.title || 'Untitled'}. It will be skipped.`,
+            variant: "destructive"
+          })
+        }
+      }
+      
+      setSlideForOffScreenRender(null) // Clear the off-screen renderer
+
+      if (imagesBase64.length === 0) {
+        toast({
+          title: "Export Error",
+          description: "No slides could be captured for the PDF.",
+          variant: "destructive",
+        })
+        throw new Error("No slides captured for PDF.")
+      }
+
+      const response = await fetch(`/api/export-pdf/${presentationId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ images: imagesBase64 }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Failed to export PDF: ${response.statusText}`)
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `${presentationTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+
+      toast({
+        title: "Success!",
+        description: `"${presentationTitle}" has been exported as a PDF.`,
+      })
+    } catch (error: any) {
+      console.error("Error exporting PDF:", error)
+      toast({
+        title: "Export Failed",
+        description: error.message || "Could not export the presentation as PDF.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsExportingPdf(false)
+      setCurrentExportingId(null)
+      // Ensure offScreenContainer is hidden if it was made visible or styled
+      if (offScreenContainerRef.current) {
+        offScreenContainerRef.current.style.left = "-9999px";
+        offScreenContainerRef.current.style.top = "-9999px";
+      }
+    }
   }
 
   if (isLoading) {
@@ -413,8 +600,8 @@ export default function PresentationsPage() {
                     )}
                   </div>
                 </CardContent>
-                <CardFooter className="flex justify-between p-4 pt-0">
-                  <div className="flex space-x-2">
+                <CardFooter className="p-4 pt-0 flex flex-col sm:flex-row gap-2 items-center">
+                  <div className="flex space-x-2 mb-2 sm:mb-0 sm:mr-auto">
                     <Button
                       variant="outline"
                       size="icon"
@@ -433,16 +620,41 @@ export default function PresentationsPage() {
                       <Trash className="h-4 w-4" />
                       <span className="sr-only">Delete</span>
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 border-2 border-black"
+                      onClick={() => handleExportPdf(presentation.id, presentation.title)}
+                      disabled={isExportingPdf && currentExportingId === presentation.id}
+                    >
+                      {isExportingPdf && currentExportingId === presentation.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <FileDown className="h-4 w-4" />
+                      )}
+                      <span className="sr-only">Export PDF</span>
+                    </Button>
                   </div>
-                  <Button
-                    asChild
-                    className="bg-green-500 hover:bg-green-600 text-white font-bold border-2 border-black rounded-xl"
-                  >
-                    <Link href={`/practice?id=${presentation.id}`}>
-                      Practice
-                      <ChevronRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <Button
+                      asChild
+                      className="w-full sm:flex-1 bg-green-500 hover:bg-green-600 text-white font-bold border-2 border-black rounded-xl"
+                    >
+                      <Link href={`/practice?id=${presentation.id}`}>
+                        <Mic className="mr-2 h-4 w-4" />
+                        Standard
+                      </Link>
+                    </Button>
+                    <Button
+                      asChild
+                      className="w-full sm:flex-1 bg-purple-500 hover:bg-purple-600 text-white font-bold border-2 border-black rounded-xl"
+                    >
+                      <Link href={`/practice/interactive/${presentation.id}`}>
+                        <MessageSquareText className="mr-2 h-4 w-4" />
+                        Interactive
+                      </Link>
+                    </Button>
+                  </div>
                 </CardFooter>
               </Card>
             ))}
@@ -474,6 +686,17 @@ export default function PresentationsPage() {
               Create Presentation
             </Button>
           </div>
+        )}
+      </div>
+      {/* Off-screen container for rendering slides for html2canvas */}
+      <div ref={offScreenContainerRef} style={{ position: 'fixed', left: '-9999px', top: '-9999px', width: '1280px', height: '720px', zIndex: -1, backgroundColor: 'white' }}>
+        {slideForOffScreenRender && offScreenContainerRef.current && (
+          <SlidePreview
+            title={slideForOffScreenRender.title || ""}
+            content={slideForOffScreenRender.content || ""}
+            imageUrl={slideForOffScreenRender.image_url || undefined}
+            isFullscreen={false} // Or a specific prop for PDF rendering if needed
+          />
         )}
       </div>
     </div>

@@ -13,11 +13,16 @@
     - **Client-Side (`utils/supabase-client.ts`)**: Updated to use `createBrowserClient` from `@supabase/ssr`. This was the **key fix** that enabled cookie-based session persistence on the client, allowing sessions to be shared with the server.
     - **Middleware (`middleware.ts`)**: Correctly configured with `createServerClient` to read and refresh session cookies.
     - **API Routes (e.g., `app/api/generate-presentation/route.ts`)**: Correctly configured with `createServerClient` to access user sessions via cookies.
-- **AI Slide Generation (`/api/generate-presentation`)**: Now working correctly with authenticated user sessions, resolving previous RLS violations for the `slides` table.
+- **AI Slide Generation (`/api/generate-presentation`)**: Now working correctly with authenticated user sessions (using OpenAI gpt-4o-mini), resolving previous RLS violations for the `slides` table.
+- **AI Transcription & Analysis**:
+    - GROQ API (groq-whisper-large-v3-turbo) integrated for speech-to-text transcription.
+    - OpenAI API (gpt-4o-mini) integrated for comprehensive analysis of transcriptions and feedback generation.
 - **`createPresentation` Service**: Updated to include `user_id` for authenticated users.
 - **`savePracticeSession` Service**: Updated to include `user_id` (for authenticated users).
 - **Practice Mode (`/practice` page)**:
     - Implemented auto-save for practice sessions. Sessions are now saved automatically after recording and analysis.
+    - **Implemented Full-Screen Slide Mode**: Users can now toggle a full-screen view of the current slide within the standard practice page. Controls remain accessible.
+- **`components/slide-preview.tsx`**: Updated to support an `isFullscreen` prop, adjusting its layout and font sizes for optimal full-screen display.
 - **Performance Analysis & History (`/history` page)**:
     - Resolved runtime error in `components/performance-chart.tsx` by removing "engagement" score.
     - Corrected TypeScript errors in `components/performance-chart.tsx` by explicitly typing `PracticeSession.analysis` as `AnalysisResult | null` in `services/practice-service.ts`.
@@ -27,8 +32,26 @@
     - Integrated into `app/create/loading.tsx` and `app/practice/loading.tsx`.
 - **PDF Import**: Functionality for importing presentations from PDF files is working.
 - **Branding**: Replaced text logo with image logo (`soh.png`) in `app/page.tsx` header.
+- **Interactive Q&A Practice Mode (Backend)**:
+    - `services/groq-service.ts` updated with `synthesizeSpeechGroq` for TTS.
+    - `services/openai-service.ts` updated with `generateChatResponseOpenAI` for AI text responses.
+    - New API route `app/api/interactive-chat/route.ts` created to orchestrate AI text and speech generation.
+    - `services/practice-service.ts` updated with `getInteractiveChatResponse` to call the new API route.
+- **Interactive Q&A Practice Mode (Frontend - Initial Implementation)**:
+    - `app/practice/select/page.tsx` updated to link to the new interactive mode.
+    - `app/practice/interactive/[presentationId]/page.tsx` created with core UI and logic.
+- **Logging Cleanup**: Reduced verbose logging in `middleware.ts` and `app/api/generate-presentation/route.ts`.
 
 ## What's Left to Build / In Progress
+- **Test Full-Screen Mode (Standard Practice)**: Thoroughly test the new full-screen slide mode in `app/practice/page.tsx`.
+    - Verify layout adjustments, control visibility and functionality, and slide rendering in both normal and full-screen states.
+    - Check for any visual glitches or usability issues.
+- **Consider Full-Screen for Interactive Q&A**: Evaluate implementing a similar full-screen slide toggle for `app/practice/interactive/[presentationId]/page.tsx`.
+- **Interactive Q&A Practice Mode (Frontend - Testing & Refinement)**:
+    - Thoroughly test the new `app/practice/interactive/[presentationId]/page.tsx`.
+    - Debug any issues with chat functionality, audio recording/playback, transcription, AI responses, and slide navigation.
+    - Refine UI/UX based on testing.
+    - Updated color scheme to align with `app/practice/page.tsx`: light blue page background (`bg-blue-50`), yellow header, pop-art styled cards with distinct shadows, and updated component colors (buttons, chat bubbles, text inputs) to match the overall product branding.
 - **Performance Analysis & History (`/history` page)**:
     - Verify the page loads correctly and charts display as expected after recent fixes.
 - **Full RLS Implementation & Testing (Ongoing)**:
@@ -44,17 +67,15 @@
     - Test the new `ThinkingProgress` UI in both flows to ensure it feels right and matches the project aesthetic.
 - **Error Handling & Testing**: Comprehensive strategy.
 - **Favicon**.
-- **Logging Cleanup**: Consider reducing or removing the extensive debugging logs added to `middleware.ts` and `app/api/generate-presentation/route.ts`.
 
 ## Current Status
-- **Phase**: Feature Refinement & Bug Fixing.
-- **Overview**: PPTX import has been temporarily disabled due to persistent build issues with its dependencies. PDF import remains functional. The critical issue of `null` sessions in API routes has been **resolved**. AI slide generation is functional. The runtime error on the `/history` page related to "engagement score" has been fixed. A new "Thinking" progress UI has been implemented for AI operations. The header logo in `app/page.tsx` has been updated. The focus shifts to verifying existing functionality (PDF import, `/history` page), testing RLS-dependent features, UX testing of the new progress UI, and continuing development.
-- The Memory Bank has been updated.
+- **Phase**: Feature Enhancement (Full-Screen Mode).
+- **Overview**: Implemented full-screen slide mode for the standard practice page (`app/practice/page.tsx`). Backend for Interactive Q&A is complete. Frontend implementation for Interactive Q&A mode has begun. Logging has been cleaned up. PPTX import remains temporarily disabled. Core AI functionalities for standard practice are operational. The `null` session issue is resolved. Focus is now on testing the new full-screen mode and continuing with the Interactive Q&A frontend.
+- The Memory Bank has been updated to reflect accurate AI service usage and the new interactive Q&A backend, and the new full-screen mode.
 
 ## Known Issues
 - **PPTX Import Disabled**: Temporarily removed due to build errors with `@saltcorn/docling` and its dependencies.
 - **Original RLS Violation on `practice_sessions` (Needs Re-testing)**: This needs to be re-tested now that the primary session propagation issue is resolved.
-- **Favicon Missing**.
 - **`/history` Page Verification**: Needs to be checked to ensure it loads correctly after the recent fixes.
 - **"Import Presentation" Button Commented Out**: The button and its functionality in `app/presentations/page.tsx` are temporarily disabled by commenting out the relevant code.
 
@@ -64,3 +85,4 @@
 - **Resolved `null` session issue in API routes by correcting the client-side Supabase initialization to use `createBrowserClient` for cookie-based SSR authentication.** This was the crucial step.
 - RLS policies for `authenticated` users (using `auth.uid()`) are now expected to work correctly as the session context is properly passed.
 - Decided to temporarily disable PPTX import due to unresolved dependency issues, focusing on maintaining PDF import functionality.
+- Implemented full-screen slide display as a toggle within the existing standard practice page, rather than a separate route.

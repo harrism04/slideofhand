@@ -175,3 +175,60 @@ export async function generateText(prompt: string): Promise<string> {
     throw error
   }
 }
+
+export interface SynthesizeSpeechOptions {
+  voice?: string;
+  responseFormat?: string;
+  // speed?: number; // PlayHT supports speed, unsure if Groq's playai-tts alias does. Keep for future.
+}
+
+export async function synthesizeSpeechGroq(
+  text: string,
+  options: SynthesizeSpeechOptions = {}
+): Promise<Blob> {
+  const {
+    voice = "Fritz-PlayAI", // As specified by user
+    responseFormat = "wav",   // As specified by user
+  } = options;
+
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    // This error will be caught by the calling API route, which should return a proper HTTP error.
+    console.error("GROQ_API_KEY is not set in environment variables.");
+    throw new Error("GROQ_API_KEY is not configured.");
+  }
+
+  const groqTtsApiUrl = "https://api.groq.com/openai/v1/audio/speech";
+
+  try {
+    const response = await fetch(groqTtsApiUrl, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "playai-tts", // As specified in user's cURL example
+        input: text,
+        voice: voice,
+        response_format: responseFormat,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error(`Groq TTS API error: ${response.status} ${response.statusText}`, errorBody);
+      // This error will be caught by the calling API route
+      throw new Error(`Groq TTS API request failed: ${response.status} ${response.statusText}. Details: ${errorBody}`);
+    }
+
+    // The response body is the audio file itself
+    const audioBlob = await response.blob();
+    return audioBlob;
+
+  } catch (error) {
+    console.error("Error in synthesizeSpeechGroq:", error);
+    // Re-throw the error to be handled by the caller (the API route)
+    throw error;
+  }
+}

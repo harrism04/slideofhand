@@ -17,10 +17,14 @@
         -   RLS policies configured for `anon` role.
         -   Requires `exec_sql` PostgreSQL function for schema management.
 -   **AI Services**:
-    -   OpenAI API (gpt-4o-mini with web_search_tool)
-    -   Local Analysis (planned: Groq API - groq-whisper-large-v3-turbo for speech analysis, currently local)
-    -   Firecrawl (for URL summarization - planned)
--   **Speech Processing**: Browser Web Speech API for transcription, custom local logic for analysis.
+    -   **OpenAI API (gpt-4o-mini)**:
+        -   Used for presentation content generation (including URL summarization via web_search_tool).
+        -   Used for comprehensive analysis of transcribed recordings for feedback (standard practice mode).
+        -   Used for generating textual responses/questions for the interactive Q&A practice mode.
+    -   **GROQ API**:
+        -   **`groq-whisper-large-v3-turbo`**: Used for highly accurate speech-to-text transcription.
+        -   **`playai-tts` (e.g., Fritz-PlayAI voice)**: Used for text-to-speech synthesis for the AI's voice in interactive Q&A mode.
+    -   **Firecrawl**: Used for web content scraping for URL summarization (can be leveraged by OpenAI or used directly).
 
 ## Development Setup
 
@@ -31,8 +35,8 @@
     -   `NEXT_PUBLIC_SUPABASE_URL`: URL for the Supabase project.
     -   `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Anonymous key for client-side Supabase access.
     -   `OPENAI_API_KEY`: For server-side OpenAI API calls.
-    -   `GROQ_API_KEY`: For potential future server-side Groq API calls (analysis currently local).
-    -   `FIRECRAWL_API_KEY` (when implemented).
+    -   `GROQ_API_KEY`: For server-side GROQ API calls for transcription.
+    -   `FIRECRAWL_API_KEY` (when implemented/if used directly).
 -   **Database Initialization**:
     -   SQL schema is defined (e.g., `database-schema.sql` or managed via `utils/init-database.ts`).
     -   The `utils/init-database.ts` script attempts to create tables and columns if they don't exist, using the `exec_sql` RPC call to Supabase.
@@ -44,8 +48,7 @@
 ## Technical Constraints
 
 -   **2-Minute Recording Limit**: For practice mode audio.
--   **Browser Web Speech API**: Cross-browser compatibility.
--   **AI API Rate Limits/Costs**: For OpenAI (Groq planned).
+-   **AI API Rate Limits/Costs**: For OpenAI and GROQ.
 -   **Serverless Function Limits**: For Next.js API routes.
 -   **Supabase RLS**: Data access is strictly controlled by RLS policies. Incorrect or missing policies will lead to empty query results or permission errors.
 
@@ -54,7 +57,7 @@
 -   **Core**: `next`, `react`, `react-dom`, `typescript`
 -   **UI & Styling**: `tailwindcss`, `shadcn-ui` (and its dependencies like `lucide-react`, `class-variance-authority`, `clsx`, `tailwind-merge`), `recharts`
 -   **Supabase**: `@supabase/supabase-js`
--   **AI SDKs/Clients**: `openai` (or direct `fetch`), direct `fetch` for Firecrawl (Groq planned, analysis currently local).
+-   **AI SDKs/Clients**: `openai` (or direct `fetch` for OpenAI and GROQ APIs), direct `fetch` for Firecrawl.
 -   **Development**: `@types/*`, `eslint`, `prettier`, `postcss`, `autoprefixer`.
 -   Refer to `package.json` and `pnpm-lock.yaml` for the definitive list.
 

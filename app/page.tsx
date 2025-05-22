@@ -100,7 +100,7 @@ export default function Home() {
                   <PenTool className="h-8 w-8 text-black" />
                 </div>
                 <CardDescription className="text-black text-lg">
-                  Generate slide content with AI assistance. Just input your topic and let our AI do the heavy lifting!
+                Create slides with AI by inputting your topic, draft, or webpage. Let our AI Agent handle the content generation for you!
                 </CardDescription>
               </CardContent>
               <CardFooter>
@@ -122,7 +122,7 @@ export default function Home() {
                   <Mic className="h-8 w-8 text-black" />
                 </div>
                 <CardDescription className="text-black text-lg">
-                  Rehearse your presentations and get real-time feedback on your delivery, pacing, and filler words.
+                Rehearse your presentations with real-time feedback on delivery and pacing, plus practice Q&A sessions in voice or chat mode.
                 </CardDescription>
               </CardContent>
               <CardFooter>
@@ -158,7 +158,7 @@ export default function Home() {
                   </svg>
                 </div>
                 <CardDescription className="text-black text-lg">
-                  Review your practice sessions with detailed analytics and identify areas for improvement.
+                Analyze practice data to spot improvement areas. Examine detailed individual sessions or track progress trends over time.
                 </CardDescription>
               </CardContent>
               <CardFooter>

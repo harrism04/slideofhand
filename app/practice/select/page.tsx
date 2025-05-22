@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, ChevronRight, Mic, Plus } from "lucide-react"
+import { ArrowLeft, ChevronRight, Mic, MessageSquareText, Plus } from "lucide-react"
 import { isSupabaseConfigured } from "@/utils/supabase-client"
 
 import { Button } from "@/components/ui/button"
@@ -157,14 +157,23 @@ export default function PracticeSelectPage() {
                     )}
                   </div>
                 </CardContent>
-                <CardFooter className="p-4 pt-0">
+                <CardFooter className="p-4 pt-0 flex flex-col sm:flex-row gap-2">
                   <Button
                     asChild
-                    className="w-full bg-green-500 hover:bg-green-600 text-white font-bold border-2 border-black rounded-xl"
+                    className="w-full sm:w-1/2 bg-green-500 hover:bg-green-600 text-white font-bold border-2 border-black rounded-xl"
                   >
                     <Link href={`/practice?id=${presentation.id}`}>
-                      Start Practice Session
-                      <ChevronRight className="ml-2 h-4 w-4" />
+                      <Mic className="mr-2 h-4 w-4" />
+                      Standard
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    className="w-full sm:w-1/2 bg-purple-500 hover:bg-purple-600 text-white font-bold border-2 border-black rounded-xl"
+                  >
+                    <Link href={`/practice/interactive/${presentation.id}`}>
+                      <MessageSquareText className="mr-2 h-4 w-4" />
+                      Interactive
                     </Link>
                   </Button>
                 </CardFooter>

@@ -5,6 +5,8 @@ export interface GenerationOptions {
   input: string
   presentationId: string
   title?: string
+  audience?: string // Added
+  goal?: string     // Added
 }
 
 // Define a more specific type for the slide object returned by generate-presentation
@@ -172,4 +174,40 @@ export async function generateAndUploadImageServerSide(
 
   console.log(`[Service/generateAndUploadImageServerSide] Image uploaded successfully. Public URL: ${publicUrlData.publicUrl}`);
   return { imageUrl: publicUrlData.publicUrl };
+}
+
+export async function generateChatResponseOpenAI(
+  systemPrompt: string,
+  userPrompt: string,
+  conversationHistory: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = []
+): Promise<string> {
+  if (!process.env.OPENAI_API_KEY) {
+    console.error("OPENAI_API_KEY is not set for server-side chat generation");
+    throw new Error("OpenAI API key not configured on server");
+  }
+
+  const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+    { role: "system", content: systemPrompt },
+    ...conversationHistory,
+    { role: "user", content: userPrompt },
+  ];
+
+  try {
+    const chatCompletion = await openaiServerInstance.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: messages,
+      temperature: 0.7, // Adjust for creativity vs. predictability
+      max_tokens: 250,  // Adjust based on expected response length
+    });
+
+    const responseContent = chatCompletion.choices[0]?.message?.content;
+    if (!responseContent) {
+      console.error("[Service/generateChatResponseOpenAI] OpenAI API did not return content.");
+      throw new Error("Failed to get response content from OpenAI");
+    }
+    return responseContent;
+  } catch (error) {
+    console.error("[Service/generateChatResponseOpenAI] Error calling OpenAI chat completion:", error);
+    throw error; // Re-throw to be handled by the API route
+  }
 }

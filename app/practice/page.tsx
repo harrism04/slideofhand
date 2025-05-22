@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ArrowLeft, ChevronRight, Mic, MicOff, Save, Volume2 } from "lucide-react"
+import { ArrowLeft, ChevronRight, Mic, MicOff, Save, Volume2, Maximize, Minimize } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -40,6 +40,7 @@ export default function PracticePage() {
   const [presentation, setPresentation] = useState<PresentationWithSlides | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [databaseError, setDatabaseError] = useState<string | null>(null)
+  const [isSlideFullscreen, setIsSlideFullscreen] = useState(false)
 
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const audioRecorderRef = useRef<AudioRecorder | null>(null)
@@ -443,6 +444,10 @@ export default function PracticePage() {
     }
   }
 
+  const toggleSlideFullscreen = () => {
+    setIsSlideFullscreen(!isSlideFullscreen)
+  }
+
   const playRecording = () => {
     if (audioBlob) {
       const audioUrl = URL.createObjectURL(audioBlob)
@@ -486,9 +491,9 @@ export default function PracticePage() {
   }
 
   return (
-    <div className="min-h-screen bg-blue-50">
+    <div className={`min-h-screen bg-blue-50 ${isSlideFullscreen ? "overflow-hidden" : ""}`}>
       {/* Header */}
-      <header className="bg-yellow-400 py-4 border-b-4 border-black">
+      <header className={`bg-yellow-400 py-4 border-b-4 border-black ${isSlideFullscreen ? "hidden" : ""}`}>
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center">
             <Link href="/" className="flex items-center text-black font-bold hover:underline">
@@ -503,7 +508,7 @@ export default function PracticePage() {
         </div>
       </header>
 
-      {!supabaseConfigured && (
+      {!supabaseConfigured && !isSlideFullscreen && (
         <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 container mx-auto">
           <p className="font-bold">Supabase Not Configured</p>
           <p>
@@ -513,7 +518,7 @@ export default function PracticePage() {
         </div>
       )}
 
-      {databaseError && (
+      {databaseError && !isSlideFullscreen && (
         <div className="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 mb-4 container mx-auto">
           <p className="font-bold">Database Setup Required</p>
           <p>{databaseError}</p>
@@ -526,11 +531,12 @@ export default function PracticePage() {
         </div>
       )}
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Slides Navigation */}
-          <div className="lg:col-span-1">
-            <Card className="border-3 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+      <div className={`container mx-auto px-4 py-8 ${isSlideFullscreen ? "p-0 m-0 max-w-full h-screen" : ""}`}>
+        <div className={`grid grid-cols-1 lg:grid-cols-3 gap-8 ${isSlideFullscreen ? "h-full" : ""}`}>
+          {/* Left Column - Slides Navigation & Controls */}
+          {/* This column might be overlaid or positioned differently in fullscreen */}
+          <div className={`${isSlideFullscreen ? "fixed bottom-0 left-0 right-0 bg-black bg-opacity-75 p-4 z-[1001] flex items-center justify-between gap-4" : "lg:col-span-1"}`}>
+            <Card className={`border-3 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] ${isSlideFullscreen ? "hidden" : ""}`}>
               <CardHeader className="bg-blue-400 border-b-2 border-black pb-4">
                 <CardTitle className="text-xl font-bangers">Presentation Slides</CardTitle>
                 <CardDescription className="text-black">
@@ -557,16 +563,16 @@ export default function PracticePage() {
               </CardContent>
             </Card>
 
-            {/* Recording Controls */}
-            <Card className="border-3 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mt-6">
-              <CardHeader className="bg-red-400 border-b-2 border-black pb-4">
+            {/* Recording Controls - adapted for normal and fullscreen */}
+            <Card className={`border-3 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] ${isSlideFullscreen ? "bg-opacity-90 bg-gray-800 text-white border-gray-700 shadow-none flex-grow" : "mt-6"}`}>
+              <CardHeader className={`border-b-2 border-black pb-4 ${isSlideFullscreen ? "hidden" : "bg-red-400"}`}>
                 <CardTitle className="text-xl font-bangers">Recording Controls</CardTitle>
                 <CardDescription className="text-black">Practice your presentation</CardDescription>
               </CardHeader>
-              <CardContent className="p-4">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <div className="text-lg font-bangers text-2xl">{formatTime(elapsedTime)}</div>
+              <CardContent className={`p-4 ${isSlideFullscreen ? "flex items-center justify-between w-full" : ""}`}>
+                <div className={`space-y-4 ${isSlideFullscreen ? "flex items-center gap-4 w-full" : ""}`}>
+                  <div className={`flex justify-between items-center ${isSlideFullscreen ? "flex-col md:flex-row gap-2" : ""}`}>
+                    <div className={`text-lg font-bangers text-2xl ${isSlideFullscreen ? "text-white" : ""}`}>{formatTime(elapsedTime)}</div>
                     <div className="flex items-center gap-2">
                       <div
                         className={`w-3 h-3 rounded-full ${
@@ -577,42 +583,42 @@ export default function PracticePage() {
                               : "bg-gray-300"
                         }`}
                       ></div>
-                      <span className="text-sm">
+                      <span className={`text-sm ${isSlideFullscreen ? "text-gray-300" : ""}`}>
                         {isRecording ? "Recording" : isProcessing ? "Processing" : "Ready"}
                       </span>
                     </div>
                   </div>
 
-                  <Progress value={(elapsedTime / 120) * 100} className="h-2" />
+                  <Progress value={(elapsedTime / 120) * 100} className={`h-2 ${isSlideFullscreen ? "w-24 md:w-48" : ""}`} />
 
-                  <div className="flex justify-center gap-4">
+                  <div className={`flex justify-center gap-4 ${isSlideFullscreen ? "order-first md:order-none" : ""}`}>
                     <Button
                       onClick={toggleRecording}
                       disabled={isProcessing || isSaving}
                       className={`${
                         isRecording ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"
-                      } text-white font-bold border-2 border-black rounded-xl w-full disabled:opacity-50`}
+                      } text-white font-bold border-2 border-black rounded-xl w-full disabled:opacity-50 ${isSlideFullscreen ? "px-2 py-1 text-sm md:px-4 md:py-2 md:text-base" : ""}`}
                     >
                       {isRecording ? (
                         <>
                           <MicOff className="mr-2 h-4 w-4" />
-                          Stop Recording
+                          Stop
                         </>
                       ) : (
                         <>
                           <Mic className="mr-2 h-4 w-4" />
-                          Start Recording
+                          Record
                         </>
                       )}
                     </Button>
                   </div>
 
-                  <div className="flex justify-between">
+                  <div className={`flex justify-between gap-2 ${isSlideFullscreen ? "ml-auto" : ""}`}>
                     <Button
                       variant="outline"
                       onClick={prevSlide}
                       disabled={currentSlide === 0 || isRecording}
-                      className="border-2 border-black rounded-xl bg-white text-black font-bold disabled:opacity-50"
+                      className={`border-2 border-black rounded-xl bg-white text-black font-bold disabled:opacity-50 ${isSlideFullscreen ? "px-2 py-1 text-sm md:px-4 md:py-2 md:text-base" : ""}`}
                     >
                       Previous
                     </Button>
@@ -620,7 +626,7 @@ export default function PracticePage() {
                       variant="outline"
                       onClick={nextSlide}
                       disabled={currentSlide === slides.length - 1 || isRecording}
-                      className="border-2 border-black rounded-xl bg-white text-black font-bold disabled:opacity-50"
+                      className={`border-2 border-black rounded-xl bg-white text-black font-bold disabled:opacity-50 ${isSlideFullscreen ? "px-2 py-1 text-sm md:px-4 md:py-2 md:text-base" : ""}`}
                     >
                       Next
                     </Button>
@@ -631,24 +637,34 @@ export default function PracticePage() {
           </div>
 
           {/* Middle Column - Current Slide */}
-          <div className="lg:col-span-2">
-            <Card className="border-3 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-              <CardHeader className="bg-purple-400 border-b-2 border-black pb-4">
+          <div className={`${isSlideFullscreen ? "fixed inset-0 z-[1000] bg-black flex items-center justify-center" : "lg:col-span-2"}`}>
+            <Card className={`border-3 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] ${isSlideFullscreen ? "w-full h-full border-none shadow-none rounded-none" : ""}`}>
+              <CardHeader className={`bg-purple-400 border-b-2 border-black pb-4 ${isSlideFullscreen ? "hidden" : ""}`}>
                 <CardTitle className="text-xl font-bangers">Current Slide</CardTitle>
                 <CardDescription className="text-black">
                   Slide {currentSlide + 1} of {slides.length}
                 </CardDescription>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={toggleSlideFullscreen}
+                  className="absolute top-2 right-2 bg-white hover:bg-gray-200 border-black border-2"
+                  title={isSlideFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                >
+                  {isSlideFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+                </Button>
               </CardHeader>
-              <CardContent className="p-6">
-                <div className="aspect-[16/9] bg-white rounded-xl border-2 border-black overflow-hidden shadow-md">
+              <CardContent className={`p-6 ${isSlideFullscreen ? "p-0 w-full h-full flex items-center justify-center" : ""}`}>
+                <div className={`bg-white overflow-hidden ${isSlideFullscreen ? "w-full h-full" : "aspect-[16/9] rounded-xl border-2 border-black shadow-md"}`}>
                   <SlidePreview
                     title={slides[currentSlide].title}
                     content={slides[currentSlide].content}
                     imageUrl={slides[currentSlide].imageUrl}
+                    isFullscreen={isSlideFullscreen}
                   />
                 </div>
 
-                {showFeedback && (
+                {showFeedback && !isSlideFullscreen && (
                   <div className="mt-6">
                     <Tabs defaultValue="feedback">
                       <TabsList className="grid w-full grid-cols-2 mb-4 bg-blue-100 p-1 rounded-lg border-2 border-black">
@@ -666,10 +682,10 @@ export default function PracticePage() {
                         </TabsTrigger>
                       </TabsList>
                       <TabsContent value="feedback">
-                        <FeedbackPanel 
-                          feedbackData={analysis} 
-                          audioBlob={audioBlob} 
-                          recordingDuration={elapsedTime} 
+                        <FeedbackPanel
+                          feedbackData={analysis}
+                          audioBlob={audioBlob}
+                          recordingDuration={elapsedTime}
                         />
                       </TabsContent>
                       <TabsContent value="transcript">
@@ -702,7 +718,7 @@ export default function PracticePage() {
               </CardContent>
             </Card>
 
-            {showFeedback && (
+            {showFeedback && !isSlideFullscreen && (
               <div className="mt-6 flex gap-4">
                 <Button
                   className="bg-green-500 hover:bg-green-600 text-white font-bold border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"

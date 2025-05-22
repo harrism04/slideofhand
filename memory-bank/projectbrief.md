@@ -32,15 +32,15 @@ To provide a comprehensive tool that addresses the entire presentation creation 
 - **Slide Navigation**: Browse through presentation slides during practice
 - **Audio Recording**: Record presentation delivery for analysis
 - **Timer**: Track presentation duration with automatic cutoff at 2 minutes
-- **Transcription**: Convert speech to text using AI for analysis
+- **Transcription**: Convert speech to text using GROQ API (groq-whisper-large-v3-turbo) for high-accuracy transcription.
 - **Real-time Feedback**: Receive immediate analysis after practice sessions
 
 ### 3. Performance Analysis
-- **Speech Analysis**: AI-powered evaluation of:
+- **Speech Analysis**: AI-powered evaluation of transcribed speech by OpenAI (gpt-4o-mini), covering:
   - Speaking pace (words per minute)
-  - Clarity and pronunciation - dependant if the sentence(s) makes sense since STT models typically may transcribe differently if enunciation isn't good
+  - Clarity and pronunciation
   - Filler word usage
-  - Overall engagement and energy
+  - Overall engagement and feedback generation
 - **Improvement Suggestions**: Actionable tips based on performance
 - **Audio Playback**: Review recorded practice sessions
 
@@ -79,10 +79,13 @@ To provide a comprehensive tool that addresses the entire presentation creation 
 - **Storage**: Supabase Storage for audio recordings
 
 ### AI Integration
-- **OpenAI**: gpt-4o-mini for presentation content generation (has web_search_tool)
-- **Local Analysis**: Speech analysis (pace, clarity, filler words, engagement) is performed locally within the `/api/analyze` route based on the transcription. (Note: Groq integration for this was planned but is not currently implemented).
-- **Speech Processing**: Browser Web Speech API and custom audio processing for transcription.
-- **Firecrawl**: For web scraping when summarizing URLs for presentation content.
+- **OpenAI (gpt-4o-mini)**:
+  - Used for generating presentation content (all modes, including URL summarization via web_search_tool).
+  - Used for comprehensive analysis of transcribed practice recordings, providing feedback on clarity, pace, filler words, and overall delivery.
+- **GROQ API (groq-whisper-large-v3-turbo)**:
+  - Used for highly accurate speech-to-text transcription of practice recordings.
+- **Firecrawl**:
+  - Used for web scraping when summarizing URLs for presentation content (leveraged by OpenAI's web_search_tool or directly).
 
 ### Data Models
 - **Presentations**: Store presentation metadata
@@ -168,15 +171,20 @@ This design approach creates a fun, engaging experience that stands out from tra
 - Client-side access uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
 ### OpenAI
-- gpt-4o-mini model for generating presentation content.
-- API key (`OPENAI_API_KEY`) managed via environment variables.
+- **Model**: gpt-4o-mini
+- **Usage**:
+  - Presentation content generation.
+  - Analysis of transcribed recordings and feedback generation.
+- **API Key**: `OPENAI_API_KEY` (managed via environment variables).
 
 ### Groq
-- (Planned/Not Currently Implemented) groq-whisper-large-v3-turbo model was planned for analyzing presentation delivery. Currently, analysis is local.
-- API key (`GROQ_API_KEY`) managed via environment variables for potential future use.
+- **Model**: groq-whisper-large-v3-turbo
+- **Usage**: Speech-to-text transcription.
+- **API Key**: `GROQ_API_KEY` (managed via environment variables).
 
 ### Firecrawl
-- To be used for searching the web when user selects "URL summarization (create presentations from websites).
+- **Usage**: Web content scraping for URL summarization feature.
+- **API Key**: `FIRECRAWL_API_KEY` (managed via environment variables, if used directly; otherwise leveraged by OpenAI).
 
 ## Deployment
 

@@ -2,7 +2,6 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  console.log('[Middleware] Incoming cookies:', request.cookies.getAll());
   // Create an unmodified response
   let response = NextResponse.next({
     request: {
@@ -16,17 +15,13 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         get(name: string) {
-          const cookieValue = request.cookies.get(name)?.value;
-          console.log(`[Middleware] Supabase client GET cookie: ${name} = ${cookieValue === undefined ? 'undefined' : '******'}`); // Avoid logging sensitive token value
-          return cookieValue;
+          return request.cookies.get(name)?.value;
         },
         set(name: string, value: string, options: CookieOptions) {
-          console.log(`[Middleware] Supabase client SET cookie: ${name}, Options: ${JSON.stringify(options)}`);
           // Middleware's job is to set the cookie on the outgoing response
           response.cookies.set({ name, value, ...options });
         },
         remove(name: string, options: CookieOptions) {
-          console.log(`[Middleware] Supabase client REMOVE cookie: ${name}, Options: ${JSON.stringify(options)}`);
           // Middleware's job is to set the cookie on the outgoing response
           response.cookies.set({ name, value: '', ...options });
         },
@@ -36,17 +31,16 @@ export async function middleware(request: NextRequest) {
 
   // Refresh session if expired - important for Server Components
   // and Server Actions.
-  // This will also update the cookies in the response / request
-  // via the set/remove handlers passed to createServerClient.
-  const { data: { user }, error } = await supabase.auth.getUser(); // Using getUser() is often preferred in middleware to just get user state. getSession() also works.
+  const { data: { user }, error } = await supabase.auth.getUser();
 
   if (error) {
-    console.error('[Middleware] Error getting user:', error.message);
-  } else {
-    console.log('[Middleware] User from supabase.auth.getUser():', user ? user.id : 'No user');
+    console.error('[Middleware] Error refreshing session:', error.message);
   }
+  // Optional: Minimal logging for user presence if needed for specific debugging
+  // else if (user) {
+  //   console.log('[Middleware] User session refreshed:', user.id);
+  // }
 
-  console.log('[Middleware] Outgoing response cookies:', response.cookies.getAll());
   return response
 }
 

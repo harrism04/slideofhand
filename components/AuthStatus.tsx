@@ -6,10 +6,20 @@ import { useRouter } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
 import { supabase } from "@/utils/supabase-client"
 import { Button } from "@/components/ui/button"
-import { LogIn, LogOut, UserCircle } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { LogIn, LogOut, Settings, UserCircle } from "lucide-react" // Added Settings and UserCircle
+import EditDisplayNameModal from "./EditDisplayNameModal"
 
 export default function AuthStatus() {
   const [user, setUser] = useState<User | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false) // Added state for modal
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -47,22 +57,59 @@ export default function AuthStatus() {
     return <div className="text-sm text-black">Loading...</div>
   }
 
+  // Determine what to display
+  const displayNameToShow = user?.user_metadata?.display_name || user?.email;
+
+  const handleDisplayNameUpdateSuccess = (newDisplayName: string) => {
+    if (user) {
+      const updatedUser = {
+        ...user,
+        user_metadata: {
+          ...user.user_metadata,
+          display_name: newDisplayName,
+        },
+      }
+      setUser(updatedUser as User) // Update local user state
+    }
+  }
+
   return (
     <div className="flex items-center gap-3">
       {user ? (
         <>
           <span className="text-sm text-black hidden sm:inline">
-            {user.email}
+            {displayNameToShow}
           </span>
-          <Button
-            onClick={handleLogout}
-            variant="outline"
-            size="sm"
-            className="bg-red-500 hover:bg-red-600 text-white font-bold border-2 border-black rounded-lg"
-          >
-            <LogOut className="mr-1 h-4 w-4" />
-            Logout
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-black hover:bg-gray-200"
+                aria-label="User menu"
+              >
+                <Settings className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <DropdownMenuLabel className="font-bangers text-lg">My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-gray-300" />
+              <DropdownMenuItem
+                onClick={() => setIsModalOpen(true)}
+                className="cursor-pointer hover:bg-yellow-100"
+              >
+                <UserCircle className="mr-2 h-4 w-4" />
+                <span>Edit Display Name</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="cursor-pointer text-red-600 hover:!text-red-600 hover:!bg-red-100"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </>
       ) : (
         <Button
@@ -76,6 +123,14 @@ export default function AuthStatus() {
             Login / Sign Up
           </Link>
         </Button>
+      )}
+      {user && (
+        <EditDisplayNameModal
+          user={user}
+          isOpen={isModalOpen}
+          onOpenChange={setIsModalOpen}
+          onSuccess={handleDisplayNameUpdateSuccess}
+        />
       )}
     </div>
   )

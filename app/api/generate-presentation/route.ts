@@ -63,10 +63,10 @@ export async function POST(httpRequest: NextRequest) { // Renamed request to htt
           streamController.close();
           return;
         }
-        console.log("[API /generate-presentation] Initial auth session:", apiRouteSessionInitial);
+        // console.log("[API /generate-presentation] Initial auth session:", apiRouteSessionInitial); // Removed for cleaner logs
         sendStreamMessage({ type: "step_update", stepId: "init", status: "completed", message: "Initialization complete." });
 
-        const { mode, input, presentationId, title: presentationTitle } = requestBody; // Use requestBody
+        const { mode, input, presentationId, title: presentationTitle, audience, goal } = requestBody; // Use requestBody, add audience and goal
 
         if (!input || !presentationId) {
           sendStreamMessage({ type: "error", message: "Input and presentationId are required" });
@@ -82,19 +82,19 @@ export async function POST(httpRequest: NextRequest) { // Renamed request to htt
         // Configure prompts based on mode (same switch logic as before)
         switch (mode) {
           case "topic":
-            systemPrompt = `You are an expert presentation designer. Create a complete presentation with 5 slides (including a cover slide) on the given topic. Format your response as a JSON array of slide objects. Each slide object must have 'title' (string), 'content' (string), and 'image_prompt' (string, a detailed and creative prompt suitable for generating an image with DALL-E 3 that visually represents the slide's content in a pop art style) properties. Use a pop art style that is energetic and bold for the slide content. For bullet points, use • or numbered lists where appropriate. IMPORTANT: Return ONLY the JSON array without any markdown formatting, explanation, or code blocks.`
-            userPrompt = `Create a 5-slide presentation on the topic: "${processedInput}". The first slide should be a cover slide with a catchy title.`
+            systemPrompt = `You are an expert presentation designer. The target audience is "${audience || "a general audience"}" and the presentation goal is "${goal || "to inform"}". Create a complete presentation with 5 slides (including a cover slide) on the given topic. Format your response as a JSON array of slide objects. Each slide object must have 'title' (string), 'content' (string), and 'image_prompt' (string, a detailed and creative prompt suitable for generating an image with DALL-E 3 that visually represents the slide's content in a pop art style) properties. Use a pop art style that is energetic and bold for the slide content. For bullet points, use • or numbered lists where appropriate. IMPORTANT: Return ONLY the JSON array without any markdown formatting, explanation, or code blocks.`
+            userPrompt = `Create a 5-slide presentation on the topic: "${processedInput}". The first slide should be a cover slide with a catchy title. Tailor it for the audience: "${audience || "a general audience"}" with the goal: "${goal || "to inform"}".`
             break
           case "bullets":
-            systemPrompt = `You are an expert presentation designer. Expand the given bullet points into a complete presentation. Format your response as a JSON array of slide objects. Each slide object must have 'title' (string), 'content' (string), and 'image_prompt' (string, a detailed and creative prompt suitable for generating an image with DALL-E 3 that visually represents the slide's content in a pop art style) properties. Use a pop art style that is energetic and bold for the slide content. For bullet points, use • or numbered lists where appropriate. IMPORTANT: Return ONLY the JSON array without any markdown formatting, explanation, or code blocks.`
-            userPrompt = `Expand these bullet points into a complete presentation:\n\n${processedInput}`
+            systemPrompt = `You are an expert presentation designer. The target audience is "${audience || "a general audience"}" and the presentation goal is "${goal || "to expand on these points"}". Expand the given bullet points into a complete presentation. Format your response as a JSON array of slide objects. Each slide object must have 'title' (string), 'content' (string), and 'image_prompt' (string, a detailed and creative prompt suitable for generating an image with DALL-E 3 that visually represents the slide's content in a pop art style) properties. Use a pop art style that is energetic and bold for the slide content. For bullet points, use • or numbered lists where appropriate. IMPORTANT: Return ONLY the JSON array without any markdown formatting, explanation, or code blocks.`
+            userPrompt = `Expand these bullet points into a complete presentation:\n\n${processedInput}\n\nTailor it for the audience: "${audience || "a general audience"}" with the goal: "${goal || "to expand on these points"}".`
             break
           case "content":
-            systemPrompt = `You are an expert presentation designer. Format the given content into well-designed slides. Format your response as a JSON array of slide objects. Each slide object must have 'title' (string), 'content' (string), and 'image_prompt' (string, a detailed and creative prompt suitable for generating an image with DALL-E 3 that visually represents the slide's content in a pop art style) properties. Use a pop art style that is energetic and bold for the slide content. For bullet points, use • or numbered lists where appropriate. IMPORTANT: Return ONLY JSON array without any markdown formatting, explanation, or code blocks.`
-            userPrompt = `Format this content into well-designed slides:\n\n${processedInput}`
+            systemPrompt = `You are an expert presentation designer. The target audience is "${audience || "a general audience"}" and the presentation goal is "${goal || "to present this information clearly"}". Format the given content into well-designed slides. Format your response as a JSON array of slide objects. Each slide object must have 'title' (string), 'content' (string), and 'image_prompt' (string, a detailed and creative prompt suitable for generating an image with DALL-E 3 that visually represents the slide's content in a pop art style) properties. Use a pop art style that is energetic and bold for the slide content. For bullet points, use • or numbered lists where appropriate. IMPORTANT: Return ONLY JSON array without any markdown formatting, explanation, or code blocks.`
+            userPrompt = `Format this content into well-designed slides:\n\n${processedInput}\n\nTailor it for the audience: "${audience || "a general audience"}" with the goal: "${goal || "to present this information clearly"}".`
             break
           case "summary":
-            systemPrompt = `You are an expert presentation designer. Your task is to summarize the provided text, which has been extracted from a website, into a concise and informative presentation.
+            systemPrompt = `You are an expert presentation designer. The target audience is "${audience || "a general audience"}" and the presentation goal is "${goal || "to summarize this content"}". Your task is to summarize the provided text, which has been extracted from a website, into a concise and informative presentation.
 Focus ONLY on the core products, services, key features, or main informational content.
 AVOID creating slides from generic website sections such as navigation menus, headers, footers, sidebars, 'Contact Us' pages, social media links, or general marketing statements unless they are absolutely central to the main subject matter.
 Also, disregard any text that seems to be analyzing the website's own structure, SEO, or technical implementation details; focus on the subject matter the website is about.

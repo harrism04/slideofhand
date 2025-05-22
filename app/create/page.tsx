@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, ChevronRight, Globe, Plus, Save, Trash, Wand2 } from "lucide-react"
 import { ThinkingProgress, type ProgressStep } from "@/components/ui/thinking-progress" // Added import
 import { FileUpload } from "@/components/file-upload"; // Import FileUpload
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Added import for Select
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -59,6 +60,8 @@ export default function CreatePage() {
   const [presentationInput, setPresentationInput] = useState("")
   const [websiteUrl, setWebsiteUrl] = useState("")
   const [showImportDialog, setShowImportDialog] = useState(false); // State for import dialog
+  const [presentationAudience, setPresentationAudience] = useState<string>("C-Level Executives");
+  const [presentationGoal, setPresentationGoal] = useState<string>("");
 
   // Check if Supabase is configured
   const supabaseConfigured = isSupabaseConfigured()
@@ -339,6 +342,8 @@ export default function CreatePage() {
           input: presentationMode === "summary" && websiteUrl.trim() ? websiteUrl : presentationInput, // Send URL if summary mode and URL is present
           presentationId,
           title: presentation?.title,
+          audience: presentationAudience,
+          goal: presentationGoal,
         }),
       });
 
@@ -722,6 +727,36 @@ export default function CreatePage() {
                             </div>
                           </div>
                         </RadioGroup>
+
+                        {/* New Inputs for Audience and Goal */}
+                        <div className="mt-4 space-y-2">
+                          <Label htmlFor="presentation-audience">Target Audience</Label>
+                          <Select value={presentationAudience} onValueChange={setPresentationAudience}>
+                            <SelectTrigger id="presentation-audience" className="border-2 border-black">
+                              <SelectValue placeholder="Select target audience" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="C-Level Executives">C-Level Executives</SelectItem>
+                              <SelectItem value="Technical Decision Makers">Technical Decision Makers</SelectItem>
+                              <SelectItem value="Procurement/Finance Teams">Procurement/Finance Teams</SelectItem>
+                              <SelectItem value="End Users/Department Heads">End Users/Department Heads</SelectItem>
+                              <SelectItem value="Potential Investors">Potential Investors</SelectItem>
+                              <SelectItem value="General">General Audience</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="mt-4 space-y-2">
+                          <Label htmlFor="presentation-goal">Presentation Goal</Label>
+                          <Input
+                            id="presentation-goal"
+                            value={presentationGoal}
+                            onChange={(e) => setPresentationGoal(e.target.value)}
+                            placeholder="e.g., Secure a pilot project, Introduce new features"
+                            className="border-2 border-black"
+                          />
+                        </div>
+                        {/* End of New Inputs */}
 
                         <div className="mt-6">
                           {presentationMode === "summary" ? (
