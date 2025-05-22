@@ -4,7 +4,7 @@ import type { Database } from '@/types/database'; // Import Database type for cr
 import { cookies } from 'next/headers'; // cookies() is not used directly in this version
 
 // Placeholder for actual parsing libraries
-import pdfParse from 'pdf-parse';
+// import pdfParse from 'pdf-parse'; // PDF import disabled
 // import { extract } from '@saltcorn/docling'; // PPTX import disabled
 
 export async function POST(request: NextRequest) {
@@ -74,62 +74,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `File size exceeds limit of ${MAX_FILE_SIZE / (1024 * 1024)}MB` }, { status: 413 });
     }
 
-    let slidesData: Array<{ order: number; title: string | null; content: string }> = [];
+    // let slidesData: Array<{ order: number; title: string | null; content: string }> = []; // Not needed as parsing is disabled
 
     if (fileType === 'application/pdf') {
-      try {
-        const pdfData = await pdfParse(fileBuffer);
-        // Attempt to split by form feed character, common page separator
-        const pagesText = pdfData.text.split(/\f/g); 
-        
-        slidesData = pagesText.map((pageText, index) => {
-          const trimmedText = pageText.trim();
-          // Basic title extraction: first non-empty line, up to a certain length
-          const firstNewLineIndex = trimmedText.indexOf('\n');
-          let title = `Page ${index + 1}`;
-          if (firstNewLineIndex > 0 && firstNewLineIndex < 100) { // Heuristic for title length
-            title = trimmedText.substring(0, firstNewLineIndex).trim();
-          } else if (trimmedText.length > 0 && trimmedText.length < 100) {
-            title = trimmedText.substring(0, trimmedText.indexOf('\n', 100) > -1 ? trimmedText.indexOf('\n', 100) : 100 ).trim() || `Page ${index + 1}`;
-          }
-
-
-          return {
-            order: index + 1,
-            title: title,
-            content: trimmedText,
-          };
-        });
-        console.log(`Successfully parsed PDF: ${fileName}, found ${slidesData.length} pages/slides.`);
-      } catch (parseError) {
-        console.error(`Error parsing PDF ${fileName}:`, parseError);
-        return NextResponse.json({ error: 'Failed to parse PDF file.' }, { status: 500 });
-      }
+      // PDF IMPORT DISABLED
+      return NextResponse.json({ error: 'PDF import is temporarily disabled.' }, { status: 503 });
     } else if (fileType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
       // PPTX IMPORT DISABLED
       return NextResponse.json({ error: 'PPTX import is temporarily disabled.' }, { status: 503 });
     } else {
-      return NextResponse.json({ error: 'Unsupported file type. Please upload a PDF file.' }, { status: 415 });
+      return NextResponse.json({ error: 'Unsupported file type. File import is temporarily disabled.' }, { status: 415 });
     }
 
-    // If slidesData is empty after attempting parsing, it means no content was extracted or an issue occurred.
-    if (slidesData.length === 0 && (fileType === 'application/pdf' || fileType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation')) {
-        // This condition will be hit if PDF parsing resulted in no slides, or if PPTX is not yet implemented.
-        // For PDF, if no slides are extracted, it's an issue.
-        if (fileType === 'application/pdf') {
-             console.warn(`No slides extracted from PDF: ${fileName}. The file might be empty or image-based.`);
-             return NextResponse.json({ error: `No text content found in the PDF. It might be an image-based PDF or empty.` }, { status: 400 });
-        }
-        // For PPTX, this is expected for now until implemented.
-    }
+    // The following code is now unreachable due to the above conditions returning.
+    // If parsing were enabled, it would proceed from here.
+    // For now, we can effectively consider it disabled.
+
+    // // If slidesData is empty after attempting parsing, it means no content was extracted or an issue occurred.
+    // if (slidesData.length === 0 && (fileType === 'application/pdf' || fileType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation')) {
+    //     // This condition will be hit if PDF parsing resulted in no slides, or if PPTX is not yet implemented.
+    //     // For PDF, if no slides are extracted, it's an issue.
+    //     if (fileType === 'application/pdf') {
+    //          console.warn(`No slides extracted from PDF: ${fileName}. The file might be empty or image-based.`);
+    //          return NextResponse.json({ error: `No text content found in the PDF. It might be an image-based PDF or empty.` }, { status: 400 });
+    //     }
+    //     // For PPTX, this is expected for now until implemented.
+    // }
 
 
-    // TODO: Call presentation-service to create presentation and slides
-    // This part will be uncommented once both parsers are in place and working.
-    const presentationService = await import('@/services/presentation-service');
-    const presentationId = await presentationService.createPresentationFromFile(supabase, userId, fileName, slidesData);
+    // // TODO: Call presentation-service to create presentation and slides
+    // // This part will be uncommented once both parsers are in place and working.
+    // const presentationService = await import('@/services/presentation-service');
+    // const presentationId = await presentationService.createPresentationFromFile(supabase, userId, fileName, slidesData);
 
-    return NextResponse.json({ message: 'File imported successfully', presentationId }, { status: 201 });
+    // return NextResponse.json({ message: 'File imported successfully', presentationId }, { status: 201 });
     
   } catch (error) {
     console.error('Error importing file:', error);

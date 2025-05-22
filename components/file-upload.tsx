@@ -15,7 +15,7 @@ interface FileUploadProps {
 export function FileUpload({
   onUploadSuccess,
   buttonText = 'Import File',
-  acceptedFileTypes = '.pdf,application/pdf',
+  acceptedFileTypes = '',
 }: FileUploadProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +35,7 @@ export function FileUpload({
     if (!file) {
       toast({
         title: 'No file selected',
-        description: 'Please select a PDF file to import.',
+        description: 'Please select a file.',
         variant: 'destructive',
       });
       return;

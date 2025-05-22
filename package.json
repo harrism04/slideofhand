@@ -60,7 +60,6 @@
     "node-pptx": "^1.0.0",
     "openai": "^4.98.0",
     "pdf-lib": "^1.17.1",
-    "pdf-parse": "^1.1.1",
     "react": "^19",
     "react-day-picker": "8.10.1",
     "react-dom": "^19",
@@ -75,7 +74,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@types/node": "^22",
+    "@types/node": "^22.15.21",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "postcss": "^8",

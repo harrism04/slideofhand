@@ -626,8 +626,8 @@ export default function CreatePage() {
                   // Import Dialog - PDF Only
                   <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
                     <DialogTrigger asChild>
-                      <Button variant="outline" className="w-full border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)]">
-                        Import from PDF
+                      <Button variant="outline" className="w-full border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)]" disabled>
+                        Import (Disabled)
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="border-2 border-black">
