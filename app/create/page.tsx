@@ -549,7 +549,7 @@ export default function CreatePage() {
               <ArrowLeft className="mr-2 h-5 w-5" />
               Back to Presentations
             </Link>
-            <h1 className="text-2xl font-bangers text-black">
+            <h1 className="text-xl sm:text-2xl font-bangers text-black">
               <span className="bg-red-500 text-white px-2 py-1 mr-2 rounded-md">EDIT</span>
               Presentation
             </h1>
@@ -581,7 +581,7 @@ export default function CreatePage() {
           <div className="lg:col-span-1">
             <Card className="border-3 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
               <CardHeader className="bg-blue-400 border-b-2 border-black pb-4">
-                <CardTitle className="text-xl font-bangers">Slides</CardTitle>
+                <CardTitle className="text-lg sm:text-xl font-bangers">Slides</CardTitle>
                 <CardDescription className="text-black">{presentation?.title || "Presentation Slides"}</CardDescription>
               </CardHeader>
               <CardContent className="p-4">
@@ -615,7 +615,7 @@ export default function CreatePage() {
             {/* AI Generation */}
             <Card className="border-3 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mt-6">
               <CardHeader className="bg-purple-400 border-b-2 border-black pb-4">
-                <CardTitle className="text-xl font-bangers">Content Tools</CardTitle>
+                <CardTitle className="text-lg sm:text-xl font-bangers">Content Tools</CardTitle>
                 <CardDescription className="text-black">Generate or import presentation content</CardDescription>
               </CardHeader>
               <CardContent className="p-4">
@@ -663,9 +663,9 @@ export default function CreatePage() {
                         Generate with AI
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="border-2 border-black max-w-3xl">
+                    <DialogContent className="border-2 border-black max-w-3xl w-[90%] sm:w-full rounded-lg">
                       <DialogHeader>
-                        <DialogTitle className="text-xl font-bangers">Generate Presentation</DialogTitle>
+                        <DialogTitle className="text-lg sm:text-xl font-bangers">Generate Presentation</DialogTitle>
                         <DialogDescription>
                           Let our AI create a presentation based on your input. Choose an option below.
                         </DialogDescription>
@@ -874,12 +874,12 @@ export default function CreatePage() {
           <div className="lg:col-span-2">
             <Card className="border-3 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
               <CardHeader className="bg-green-400 border-b-2 border-black pb-4">
-                <CardTitle className="text-xl font-bangers">Slide Editor</CardTitle>
+                <CardTitle className="text-lg sm:text-xl font-bangers">Slide Editor</CardTitle>
                 <CardDescription className="text-black">
                   {editingSlide ? `Editing Slide ${currentSlideIndex + 1}` : "Create New Slide"}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="title" className="text-base font-medium mb-2 block">
@@ -955,10 +955,10 @@ export default function CreatePage() {
             {/* Slide Preview */}
             <Card className="border-3 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mt-6">
               <CardHeader className="bg-red-400 border-b-2 border-black pb-4">
-                <CardTitle className="text-xl font-bangers">Slide Preview</CardTitle>
+                <CardTitle className="text-lg sm:text-xl font-bangers">Slide Preview</CardTitle>
                 <CardDescription className="text-black">See how your slide will look</CardDescription>
               </CardHeader>
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="aspect-[16/9] bg-white rounded-xl border-2 border-black overflow-hidden shadow-md">
                   <SlidePreview
                     title={slideTitle || "Your Slide Title"}
@@ -969,10 +969,10 @@ export default function CreatePage() {
               </CardContent>
             </Card>
 
-            <div className="mt-6 flex justify-between">
+            <div className="mt-6 flex flex-col sm:flex-row sm:justify-between gap-4">
               <Button
                 onClick={() => setIsPresentationModeOpen(true)}
-                className="bg-purple-500 hover:bg-purple-600 text-white font-bold border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                className="bg-purple-500 hover:bg-purple-600 text-white font-bold border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full sm:w-auto"
               >
                 <Wand2 className="mr-2 h-4 w-4" />
                 AI Presentation Generator
@@ -980,7 +980,7 @@ export default function CreatePage() {
 
               <Button
                 asChild
-                className="bg-blue-500 hover:bg-blue-600 text-white font-bold border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                className="bg-blue-500 hover:bg-blue-600 text-white font-bold border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full sm:w-auto"
               >
                 <Link href={`/practice?id=${presentationId}`}>
                   Practice Presentation
