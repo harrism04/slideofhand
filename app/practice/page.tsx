@@ -500,7 +500,7 @@ export default function PracticePage() {
               <ArrowLeft className="mr-2 h-5 w-5" />
               Back to Dashboard
             </Link>
-            <h1 className="text-2xl font-bangers text-black">
+            <h1 className="text-xl sm:text-2xl font-bangers text-black">
               <span className="bg-red-500 text-white px-2 py-1 mr-2 rounded-md">PRACTICE</span>
               Mode
             </h1>
@@ -538,7 +538,7 @@ export default function PracticePage() {
           <div className={`${isSlideFullscreen ? "fixed bottom-0 left-0 right-0 bg-black bg-opacity-75 p-4 z-[1001] flex items-center justify-between gap-4" : "lg:col-span-1"}`}>
             <Card className={`border-3 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] ${isSlideFullscreen ? "hidden" : ""}`}>
               <CardHeader className="bg-blue-400 border-b-2 border-black pb-4">
-                <CardTitle className="text-xl font-bangers">Presentation Slides</CardTitle>
+                <CardTitle className="text-lg sm:text-xl font-bangers">Presentation Slides</CardTitle>
                 <CardDescription className="text-black">
                   {presentation?.title || "Navigate through your slides"}
                 </CardDescription>
@@ -566,16 +566,16 @@ export default function PracticePage() {
             {/* Recording Controls - adapted for normal and fullscreen */}
             <Card className={`border-3 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] ${isSlideFullscreen ? "bg-opacity-90 bg-gray-800 text-white border-gray-700 shadow-none flex-grow" : "mt-6"}`}>
               <CardHeader className={`border-b-2 border-black pb-4 ${isSlideFullscreen ? "hidden" : "bg-red-400"}`}>
-                <CardTitle className="text-xl font-bangers">Recording Controls</CardTitle>
+                <CardTitle className="text-lg sm:text-xl font-bangers">Recording Controls</CardTitle>
                 <CardDescription className="text-black">Practice your presentation</CardDescription>
               </CardHeader>
               <CardContent className={`p-4 ${isSlideFullscreen ? "flex items-center justify-between w-full" : ""}`}>
-                <div className={`space-y-4 ${isSlideFullscreen ? "flex items-center gap-4 w-full" : ""}`}>
-                  <div className={`flex justify-between items-center ${isSlideFullscreen ? "flex-col md:flex-row gap-2" : ""}`}>
-                    <div className={`text-lg font-bangers text-2xl ${isSlideFullscreen ? "text-white" : ""}`}>{formatTime(elapsedTime)}</div>
+                <div className={`space-y-4 ${isSlideFullscreen ? "flex items-center gap-2 sm:gap-4 w-full" : ""}`}> {/* Adjusted gap for fullscreen */}
+                  <div className={`flex justify-between items-center ${isSlideFullscreen ? "flex-col md:flex-row gap-1 sm:gap-2" : ""}`}> {/* Adjusted gap for fullscreen */}
+                    <div className={`font-bangers text-xl sm:text-2xl ${isSlideFullscreen ? "text-white" : ""}`}>{formatTime(elapsedTime)}</div> {/* Responsive text for timer */}
                     <div className="flex items-center gap-2">
                       <div
-                        className={`w-3 h-3 rounded-full ${
+                        className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${ /* Responsive indicator */
                           isRecording
                             ? "bg-red-500 animate-pulse"
                             : isProcessing
@@ -640,7 +640,7 @@ export default function PracticePage() {
           <div className={`${isSlideFullscreen ? "fixed inset-0 z-[1000] bg-black flex items-center justify-center" : "lg:col-span-2"}`}>
             <Card className={`border-3 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] ${isSlideFullscreen ? "w-full h-full border-none shadow-none rounded-none" : ""}`}>
               <CardHeader className={`bg-purple-400 border-b-2 border-black pb-4 ${isSlideFullscreen ? "hidden" : ""}`}>
-                <CardTitle className="text-xl font-bangers">Current Slide</CardTitle>
+                <CardTitle className="text-lg sm:text-xl font-bangers">Current Slide</CardTitle>
                 <CardDescription className="text-black">
                   Slide {currentSlide + 1} of {slides.length}
                 </CardDescription>
@@ -648,13 +648,13 @@ export default function PracticePage() {
                   variant="outline"
                   size="icon"
                   onClick={toggleSlideFullscreen}
-                  className="absolute top-2 right-2 bg-white hover:bg-gray-200 border-black border-2"
+                  className="absolute top-2 right-2 bg-white hover:bg-gray-200 border-black border-2 p-1 sm:p-2" /* Adjusted padding for tap target */
                   title={isSlideFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
                 >
-                  {isSlideFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+                  {isSlideFullscreen ? <Minimize className="h-4 w-4 sm:h-5 sm:w-5" /> : <Maximize className="h-4 w-4 sm:h-5 sm:w-5" />} {/* Responsive icon size */}
                 </Button>
               </CardHeader>
-              <CardContent className={`p-6 ${isSlideFullscreen ? "p-0 w-full h-full flex items-center justify-center" : ""}`}>
+              <CardContent className={`p-4 sm:p-6 ${isSlideFullscreen ? "p-0 w-full h-full flex items-center justify-center" : ""}`}> {/* Adjusted padding */}
                 <div className={`bg-white overflow-hidden ${isSlideFullscreen ? "w-full h-full" : "aspect-[16/9] rounded-xl border-2 border-black shadow-md"}`}>
                   <SlidePreview
                     title={slides[currentSlide].title}
@@ -719,9 +719,9 @@ export default function PracticePage() {
             </Card>
 
             {showFeedback && !isSlideFullscreen && (
-              <div className="mt-6 flex gap-4">
+              <div className="mt-6 flex flex-col sm:flex-row gap-2 sm:gap-4">
                 <Button
-                  className="bg-green-500 hover:bg-green-600 text-white font-bold border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                  className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-bold border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                   onClick={saveSession}
                   disabled={isSaving || !presentationId}
                 >
@@ -739,7 +739,7 @@ export default function PracticePage() {
                 </Button>
                 <Button
                   variant="outline"
-                  className="bg-white text-black font-bold border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                  className="w-full sm:w-auto bg-white text-black font-bold border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                   onClick={playRecording}
                   disabled={!audioBlob}
                 >
@@ -748,7 +748,7 @@ export default function PracticePage() {
                 </Button>
                 <Button
                   asChild
-                  className="ml-auto bg-blue-500 hover:bg-blue-600 text-white font-bold border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                  className="w-full sm:w-auto ml-auto bg-blue-500 hover:bg-blue-600 text-white font-bold border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                 >
                   <Link href="/history">
                     View History

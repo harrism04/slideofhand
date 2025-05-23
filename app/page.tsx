@@ -1,12 +1,15 @@
 import Link from "next/link"
 import Image from "next/image" // Added Image import
-import { ArrowRight, Mic, PenTool, Play } from "lucide-react"
+import { ArrowRight, Mic, PenTool, Play, Menu, X } from "lucide-react" // Added Menu and X icons
+import { useState } from "react" // Added useState
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import AuthStatus from "@/components/AuthStatus"
 
 export default function Home() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -16,7 +19,8 @@ export default function Home() {
             <Link href="/" passHref>
               <Image src="/soh.png" alt="Slides On Hand logo" width={120} height={40} />
             </Link>
-            <nav>
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex">
               <ul className="flex space-x-6">
                 <li>
                   <Link href="/presentations" className="text-black font-bold hover:underline">
@@ -35,8 +39,39 @@ export default function Home() {
                 </li>
               </ul>
             </nav>
-            <AuthStatus />
+            <div className="flex items-center">
+              <AuthStatus />
+              {/* Mobile Menu Button */}
+              <button
+                className="md:hidden ml-4 p-2"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                {isMobileMenuOpen ? <X className="h-6 w-6 text-black" /> : <Menu className="h-6 w-6 text-black" />}
+              </button>
+            </div>
           </div>
+          {/* Mobile Navigation Menu */}
+          {isMobileMenuOpen && (
+            <nav className="md:hidden mt-4">
+              <ul className="flex flex-col space-y-2">
+                <li>
+                  <Link href="/presentations" className="text-black font-bold hover:underline block py-2" onClick={() => setIsMobileMenuOpen(false)}>
+                    Presentations
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/practice" className="text-black font-bold hover:underline block py-2" onClick={() => setIsMobileMenuOpen(false)}>
+                    Practice
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/history" className="text-black font-bold hover:underline block py-2" onClick={() => setIsMobileMenuOpen(false)}>
+                    History
+                  </Link>
+                </li>
+              </ul>
+            </nav>
+          )}
         </div>
       </header>
 
@@ -51,15 +86,15 @@ export default function Home() {
         />
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-6xl font-bangers text-black mb-6">
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bangers text-black mb-6">
               <span className="bg-blue-500 text-white px-3 py-1 rounded-md">LEVEL</span> UP
               <br />
               YOUR <span className="bg-red-500 text-white px-3 py-1 rounded-md">PRESENTATIONS!</span>
             </h2>
-            <p className="text-xl mb-8 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl mb-8 max-w-2xl mx-auto">
               Create stunning slides with AI assistance and practice your delivery with real-time feedback.
             </p>
-            <div className="flex justify-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-center sm:gap-4 gap-2">
               <Button
                 asChild
                 size="lg"
@@ -87,7 +122,7 @@ export default function Home() {
       {/* Features Section */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bangers text-center mb-12">
+          <h2 className="text-3xl sm:text-4xl font-bangers text-center mb-12">
             <span className="bg-purple-500 text-white px-3 py-1 rounded-md">AWESOME</span> FEATURES
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
@@ -96,10 +131,10 @@ export default function Home() {
                 <CardTitle className="text-2xl font-bangers">AI Content Generation</CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
-                <div className="bg-yellow-200 rounded-full w-16 h-16 flex items-center justify-center mb-4 border-2 border-black">
-                  <PenTool className="h-8 w-8 text-black" />
+                <div className="bg-yellow-200 rounded-full w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center mb-4 border-2 border-black">
+                  <PenTool className="h-6 w-6 sm:h-8 sm:w-8 text-black" />
                 </div>
-                <CardDescription className="text-black text-lg">
+                <CardDescription className="text-black text-base sm:text-lg">
                 Create slides with AI by inputting your topic, draft, or webpage. Let our AI Agent handle the content generation for you!
                 </CardDescription>
               </CardContent>
@@ -118,10 +153,10 @@ export default function Home() {
                 <CardTitle className="text-2xl font-bangers">Practice Mode</CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
-                <div className="bg-red-200 rounded-full w-16 h-16 flex items-center justify-center mb-4 border-2 border-black">
-                  <Mic className="h-8 w-8 text-black" />
+                <div className="bg-red-200 rounded-full w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center mb-4 border-2 border-black">
+                  <Mic className="h-6 w-6 sm:h-8 sm:w-8 text-black" />
                 </div>
-                <CardDescription className="text-black text-lg">
+                <CardDescription className="text-black text-base sm:text-lg">
                 Rehearse your presentations with real-time feedback on delivery and pacing, plus practice Q&A sessions in voice or chat mode.
                 </CardDescription>
               </CardContent>
@@ -140,24 +175,24 @@ export default function Home() {
                 <CardTitle className="text-2xl font-bangers">Performance Analytics</CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
-                <div className="bg-blue-200 rounded-full w-16 h-16 flex items-center justify-center mb-4 border-2 border-black">
+                <div className="bg-blue-200 rounded-full w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center mb-4 border-2 border-black">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
+                    width="24"  // Keep original SVG attributes for base size
+                    height="24" // Keep original SVG attributes for base size
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="h-8 w-8 text-black"
+                    className="h-6 w-6 sm:h-8 sm:w-8 text-black" // Responsive icon size
                   >
                     <path d="M3 3v18h18" />
                     <path d="m19 9-5 5-4-4-3 3" />
                   </svg>
                 </div>
-                <CardDescription className="text-black text-lg">
+                <CardDescription className="text-black text-base sm:text-lg">
                 Analyze practice data to spot improvement areas. Examine detailed individual sessions or track progress trends over time.
                 </CardDescription>
               </CardContent>

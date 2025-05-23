@@ -428,7 +428,7 @@ export default function PresentationsPage() {
               <ArrowLeft className="mr-2 h-5 w-5" />
               Back to Dashboard
             </Link>
-            <h1 className="text-2xl font-bangers text-black">
+            <h1 className="text-xl sm:text-2xl font-bangers text-black">
               <span className="bg-red-500 text-white px-2 py-1 mr-2 rounded-md">MY</span>
               Presentations
             </h1>
@@ -447,9 +447,9 @@ export default function PresentationsPage() {
       )}
 
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Your Presentations</h2>
-          <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold">Your Presentations</h2>
+          <div className="flex gap-2 w-full sm:w-auto">
             {/* <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)]">
@@ -478,14 +478,14 @@ export default function PresentationsPage() {
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-green-500 hover:bg-green-600 text-white font-bold border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                <Button className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-bold border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                   <Plus className="mr-2 h-4 w-4" />
                   New Presentation
                 </Button>
               </DialogTrigger>
-              <DialogContent className="border-2 border-black">
+              <DialogContent className="border-2 border-black w-[90%] sm:w-full rounded-lg">
               <DialogHeader>
-                <DialogTitle className="text-xl font-bangers">Create New Presentation</DialogTitle>
+                <DialogTitle className="text-lg sm:text-xl font-bangers">Create New Presentation</DialogTitle>
                 <DialogDescription>
                   Enter a title for your new presentation. You can add slides and content later.
                 </DialogDescription>
@@ -524,9 +524,9 @@ export default function PresentationsPage() {
 
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent className="border-2 border-black">
+          <AlertDialogContent className="border-2 border-black w-[90%] sm:w-full rounded-lg">
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-xl font-bangers">Delete Presentation</AlertDialogTitle>
+              <AlertDialogTitle className="text-lg sm:text-xl font-bangers">Delete Presentation</AlertDialogTitle>
               <AlertDialogDescription>
                 Are you sure you want to delete this presentation? This action cannot be undone.
               </AlertDialogDescription>
@@ -559,12 +559,12 @@ export default function PresentationsPage() {
                 className="border-3 border-black rounded-xl overflow-hidden shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
               >
                 <CardHeader className="bg-blue-400 border-b-2 border-black pb-4">
-                  <CardTitle className="text-xl truncate">{presentation.title}</CardTitle>
+                  <CardTitle className="text-lg sm:text-xl truncate">{presentation.title}</CardTitle>
                   <CardDescription className="text-black">
                     Created on {formatDate(presentation.created_at)}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="aspect-video bg-white rounded-lg border-2 border-black flex items-center justify-center overflow-hidden">
                     {presentation.first_slide_image_url ? (
                       <img
@@ -600,8 +600,9 @@ export default function PresentationsPage() {
                     )}
                   </div>
                 </CardContent>
-                <CardFooter className="p-4 pt-0 flex flex-col sm:flex-row gap-2 items-center">
-                  <div className="flex space-x-2 mb-2 sm:mb-0 sm:mr-auto">
+                <CardFooter className="p-4 pt-0 flex flex-col gap-2 items-center"> 
+                  {/* Removed sm:flex-row to stack controls vertically first, then let inner groups handle row behavior */}
+                  <div className="flex flex-row space-x-2 w-full justify-center sm:justify-start sm:w-auto sm:mr-auto mb-2 sm:mb-0">
                     <Button
                       variant="outline"
                       size="icon"
