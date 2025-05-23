@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link"
 import Image from "next/image" // Added Image import
 import { ArrowRight, Mic, PenTool, Play, Menu, X } from "lucide-react" // Added Menu and X icons
